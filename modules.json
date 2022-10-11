@@ -30,10 +30,16 @@
             "nf-core/minimap2/index": {
                 "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
             },
+            "nf-core/pirate": {
+                "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+            },
             "nf-core/quast": {
                 "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
             },
             "nf-core/unicycler": {
+                "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+            },
+            "nf-core/vsearch/usearchglobal": {
                 "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
             }
         }

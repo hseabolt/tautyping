@@ -108,6 +108,6 @@ workflow DE_NOVO_ASSEMBLY {
     quast_tsv     = ch_quast_tsv              // channel: [ val(meta), [ tsv ] ]
 
     // De novo gene calling
-    genes         = ch_genecalling            // channel: [ val(meta), [ gff ] ]
+    gff           = ch_genecalling            // channel: [ val(meta), [ gff ] ]
     versions      = ch_versions.ifEmpty(null) // channel: [ versions.yml ]
 }

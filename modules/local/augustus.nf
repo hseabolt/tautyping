@@ -20,9 +20,8 @@ process AUGUSTUS {
     script: // This script is bundled with the pipeline, in nf-core/tautyping/bin/
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def maxmem = task.memory
     """
-    augustus --species=${species} ${fasta} | \\
+    augustus --species=${species} $args ${fasta} | \\
     gzip > ${prefix}.predictions.gff.gz
     """
 }

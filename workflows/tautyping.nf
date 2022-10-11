@@ -38,7 +38,7 @@ ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multi
 //
 include { INPUT_CHECK           } from '../subworkflows/local/input_check'
 include { DE_NOVO_ASSEMBLY      } from '../subworkflows/local/Denovo_assembly'
-include { PANGENOME             } from '../subworkflows/local/pangenome'
+include { REFORMAT_GFF          } from '../modules/local/reformatgff'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -51,6 +51,7 @@ include { PANGENOME             } from '../subworkflows/local/pangenome'
 //
 include { MULTIQC                     } from '../modules/nf-core/modules/multiqc/main'
 include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'
+inclue //PIRATE
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -80,6 +81,17 @@ workflow TAUTYPING {
         INPUT_CHECK.out.reads, ch_kraken2db, ch_augspecies
     )
 
+    // Generate a "psuedo" pangenome using the set of input genomes provided
+    REFORMAT_GFF (
+        DE_NOVO_ASSEMBLY.out.scaffolds.join(DE_NOVO_ASSEMBLY.out.gff)
+    )
+    PIRATE (
+        REFORMAT_GFF.out.gff
+    )
+    ch_pirate_results = PIRATE.out.results
+    ch_pirate_aln = PIRATE.out.aln
+    ch_versions = ch_versions.mix(PIRATE.out.versions)
+    
     CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique().collectFile(name: 'collated_versions.yml')
     )
