@@ -51,8 +51,7 @@ include { REFORMAT_GFF          } from '../modules/local/reformatgff'
 //
 include { MULTIQC                     } from '../modules/nf-core/modules/multiqc/main'
 include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'
-inclue //PIRATE
-
+include { NF-CORE_PIRATE as PIRATE    } from '../modules/nf-core/modules/nf-core/pirate/main'
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
@@ -92,6 +91,10 @@ workflow TAUTYPING {
     ch_pirate_aln = PIRATE.out.aln
     ch_versions = ch_versions.mix(PIRATE.out.versions)
     
+    // TODO: rank correlations subworkflow
+
+
+
     CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique().collectFile(name: 'collated_versions.yml')
     )
