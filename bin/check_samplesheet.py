@@ -129,7 +129,7 @@ class RowChecker:
                     row[self._sample_col] = f"{sample}_T{seen[sample]}"
 
 
-def read_head(handle, num_lines=10):
+def read_head(handle, num_lines=2):
     """Read the specified number of lines from the current position in the file."""
     lines = []
     for idx, line in enumerate(handle):

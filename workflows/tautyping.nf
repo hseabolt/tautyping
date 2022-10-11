@@ -11,12 +11,13 @@ WorkflowTautyping.initialise(params, log)
 
 // TODO nf-core: Add all file path parameters for the pipeline to the list below
 // Check input path parameters to see if they exist
-def checkPathParamList = [ params.input, params.multiqc_config, params.fasta ]
+def checkPathParamList = [ params.input, params.multiqc_config, params.kraken2_db ]
 for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
 
 // Check mandatory parameters
 if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
-
+if (params.kraken2_db) { ch_kraken2db = path(params.kraken2_db) } else { exit 1, 'Kraken2 database not specified!' }
+if (params.augustus_species) { ch_augspecies = path(params.augustus_species) } else { exit 1, 'Species model for Augustus is not specified!' }
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     CONFIG FILES
@@ -35,7 +36,9 @@ ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multi
 //
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
-include { INPUT_CHECK } from '../subworkflows/local/input_check'
+include { INPUT_CHECK           } from '../subworkflows/local/input_check'
+include { DE_NOVO_ASSEMBLY      } from '../subworkflows/local/Denovo_assembly'
+include { PANGENOME             } from '../subworkflows/local/pangenome'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -46,7 +49,6 @@ include { INPUT_CHECK } from '../subworkflows/local/input_check'
 //
 // MODULE: Installed directly from nf-core/modules
 //
-include { NF-CORE_FASTP as FASTP } from '../modules/nf-core/modules/nf-core/fastp/main'
 include { MULTIQC                     } from '../modules/nf-core/modules/multiqc/main'
 include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'
 
@@ -72,12 +74,11 @@ workflow TAUTYPING {
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
 
     //
-    // MODULE: Run FastQC
+    // SUBWORKFLOW: Denovo assembly + de novo gene calling
     //
-    FASTQC (
-        INPUT_CHECK.out.reads
+    DE_NOVO_ASSEMBLY (
+        INPUT_CHECK.out.reads, ch_kraken2db, ch_augspecies
     )
-    ch_versions = ch_versions.mix(FASTQC.out.versions.first())
 
     CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique().collectFile(name: 'collated_versions.yml')
