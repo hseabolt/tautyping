@@ -2,13 +2,16 @@
 // Subworkflow : Denovo Assembly - upstream assembly pipeline
 //
 
+//TODO: Check syntax of these include statements for nf-core modules
 include { FASTQC as FASTQC_RAW                   } from '../modules/nf-core/modules/nf-core/fastqc/main'
 include { NF-CORE_FASTP as FASTP                 } from '../modules/nf-core/modules/nf-core/fastp/main'
 include { FASTQC as FASTQC_TRIMMED               } from '../modules/nf-core/modules/nf-core/fastqc/main'
 include { NF-CORE_KRAKEN2_KRAKEN2 as KRAKEN2     } from '../modules/nf-core/modules/nf-core/kraken2/kraken2/main'
 include { NF-CORE_BBMAP_BBDUK as BBDUK           } from '../modules/nf-core/modules/nf-core/bbmap/bbduk/main'
-include { SKESA                                  } from '/scicomp/home-pure/ngr8/SCBS/nf-core/nf-core-tautyping/modules/local/skesa.nf'
-// Include statement for Skesa
+include { SKESA                                  } from '../modules/local/skesa'
+include { NF-CORE_FLYE as FLYE                   } from '../modules/nf-core/modules/nf-core/flye/main' 
+
+// TODO: include functionality for ONT read data --> Skesa only handles Illumina short reads
 
 workflow DE_NOVO_ASSEMBLY {
     take:
