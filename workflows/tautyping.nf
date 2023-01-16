@@ -9,15 +9,13 @@ def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 // Validate input parameters
 WorkflowTautyping.initialise(params, log)
 
-// TODO nf-core: Add all file path parameters for the pipeline to the list below
 // Check input path parameters to see if they exist
-def checkPathParamList = [ params.input, params.multiqc_config, params.kraken2_db ]
+def checkPathParamList = [ params.input, params.ref_fasta, params.ref_gff, params.feature_types ]
 for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
 
 // Check mandatory parameters
 if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
-if (params.kraken2_db) { ch_kraken2db = path(params.kraken2_db) } else { exit 1, 'Kraken2 database not specified!' }
-if (params.augustus_species) { ch_augspecies = path(params.augustus_species) } else { exit 1, 'Species model for Augustus is not specified!' }
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     CONFIG FILES
@@ -36,9 +34,11 @@ ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multi
 //
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
-include { INPUT_CHECK           } from '../subworkflows/local/input_check'
-include { DE_NOVO_ASSEMBLY      } from '../subworkflows/local/Denovo_assembly'
-include { REFORMAT_GFF          } from '../modules/local/reformatgff'
+include { INPUT_CHECK         } from '../subworkflows/local/input_check'
+include { ANNOTATION_TRANSFER } from '../subworkflows/local/annotation_transfer'
+include { FASTANI             } from '../subworkflows/local/fastani'
+
+include { CREATE_LIST         } from '../modules/local/create_list'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -49,9 +49,8 @@ include { REFORMAT_GFF          } from '../modules/local/reformatgff'
 //
 // MODULE: Installed directly from nf-core/modules
 //
-include { MULTIQC                     } from '../modules/nf-core/modules/multiqc/main'
 include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'
-include { NF-CORE_PIRATE as PIRATE    } from '../modules/nf-core/modules/nf-core/pirate/main'
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
@@ -68,55 +67,63 @@ workflow TAUTYPING {
     //
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
     //
+	ch_all_fastas = Channel.empty()
+	ch_input      = file(params.input) 
     INPUT_CHECK (
         ch_input
     )
-    ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
+    ch_versions     = ch_versions.mix(INPUT_CHECK.out.versions)
+	ch_annots_fasta = INPUT_CHECK.out.fasta
+	ch_fastani_qry  = INPUT_CHECK.out.fasta
+	
+    //
+    // SUBWORKFLOW: Transfer GFF annotations from a reference FASTA/GFF to another closely related genome
+    //
+	ch_ref_fasta     = file(params.ref_fasta) 
+	ch_ref_gff       = file(params.ref_gff) 
+	ch_feature_types = Channel.empty()
+	ch_tmpdir        = Channel.empty()
+	if(params.feature_types != null)    {   ch_feature_types  = Channel.fromPath(params.feature_types, checkIfExists:true).first()    }
+	if(params.tmpdir != null)           {   ch_tmpdir         = Channel.fromPath(params.tmpdir, checkIfExists:true).first()           }
+    ANNOTATION_TRANSFER (
+	    ch_annots_fasta, ch_ref_fasta, ch_ref_gff, ch_feature_types, ch_tmpdir
+	}
+    ch_gffs       = ANNOTATION_TRANSFER.out.gffs
+	ch_unmapped   = ANNOTATION_TRANSFER.out.unmapped
+	ch_versions   = ch_versions.mix(ANNOTATION_TRANSFER.out.versions)
 
     //
-    // SUBWORKFLOW: Denovo assembly + de novo gene calling
+	// SUBWORKFLOW: Compute one vs. all FastANI and generate a table of genome pairs
     //
-    DE_NOVO_ASSEMBLY (
-        INPUT_CHECK.out.reads, ch_kraken2db, ch_augspecies
-    )
-
-    // Generate a "psuedo" pangenome using the set of input genomes provided
-    REFORMAT_GFF (
-        DE_NOVO_ASSEMBLY.out.scaffolds.join(DE_NOVO_ASSEMBLY.out.gff)
-    )
-    PIRATE (
-        REFORMAT_GFF.out.gff
-    )
-    ch_pirate_results = PIRATE.out.results
-    ch_pirate_aln = PIRATE.out.aln
-    ch_versions = ch_versions.mix(PIRATE.out.versions)
-    
-    // TODO: rank correlations subworkflow
-
-
+	ch_ani         = Channel.empty()
+	CREATE_LIST (
+	   params.input
+	)
+	ch_genome_list = CREATE_LIST.out.list
+	FASTANI (
+	    ch_fastani_qry, ch_genome_list
+	)
+	ch_ani        = FASTANI.out.ani
+	ch_versions   = ch_versions.mix(FASTANI.out.versions)
+	
+	
+	//
+	// SUBWORKFLOW: Compute a provisional "pangenome" and generate all vs. all distance matrices for each core gene in the pangenome
+    // 
+	
+	//
+	// SUBWORKFLOW: Compute rank correlations between individual genes' distance matrices and WGS-based distance matrix
+	//
+	
+	
+	//
+	// SUBWORKFLOW: Construct sets from genes with the strongest rank corrlations
+	//
+	
 
     CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique().collectFile(name: 'collated_versions.yml')
     )
-
-    //
-    // MODULE: MultiQC
-    //
-    workflow_summary    = WorkflowTautyping.paramsSummaryMultiqc(workflow, summary_params)
-    ch_workflow_summary = Channel.value(workflow_summary)
-
-    ch_multiqc_files = Channel.empty()
-    ch_multiqc_files = ch_multiqc_files.mix(Channel.from(ch_multiqc_config))
-    ch_multiqc_files = ch_multiqc_files.mix(ch_multiqc_custom_config.collect().ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
-    ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())
-    ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
-
-    MULTIQC (
-        ch_multiqc_files.collect()
-    )
-    multiqc_report = MULTIQC.out.report.toList()
-    ch_versions    = ch_versions.mix(MULTIQC.out.versions)
 }
 
 /*

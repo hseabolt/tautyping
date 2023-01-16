@@ -3,9 +3,9 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     nf-core/tautyping
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Github : https://github.com/nf-core/tautyping
-    Website: https://nf-co.re/tautyping
-    Slack  : https://nfcore.slack.com/channels/tautyping
+    Github : https://github.com/hseabolt/tautyping
+    Website: [under contruction!]
+    Slack  : [under contruction!]
 ----------------------------------------------------------------------------------------
 */
 
@@ -17,8 +17,7 @@ nextflow.enable.dsl = 2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-//params.fasta = WorkflowMain.getGenomeAttribute(params, 'fasta')
-params.kraken2_db = WorkflowMain.getGenomeAttribute(params, 'kraken2_db')
+params.fasta = WorkflowMain.getGenomeAttribute(params, 'fasta')
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -35,6 +34,8 @@ WorkflowMain.initialise(workflow, params, log)
 */
 
 include { TAUTYPING } from './workflows/tautyping'
+
+//
 // WORKFLOW: Run main nf-core/tautyping analysis pipeline
 //
 workflow NFCORE_TAUTYPING {

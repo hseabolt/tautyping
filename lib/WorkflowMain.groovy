@@ -22,7 +22,7 @@ class WorkflowMain {
     // Print help to screen if required
     //
     public static String help(workflow, params, log) {
-        def command = "nextflow run ${workflow.manifest.name} --input samplesheet.csv -profile singularity --kraken2_db <KRAKENDB> --augustus_species <SPECIES>"
+        def command = "nextflow run ${workflow.manifest.name} --input samplesheet.csv --genome GRCh37 -profile docker"
         def help_string = ''
         help_string += NfcoreTemplate.logo(workflow, params.monochrome_logs)
         help_string += NfcoreSchema.paramsHelp(workflow, params, command)
@@ -84,13 +84,11 @@ class WorkflowMain {
     //
     public static String getGenomeAttribute(params, attribute) {
         def val = ''
-        /*
         if (params.genomes && params.genome && params.genomes.containsKey(params.genome)) {
             if (params.genomes[ params.genome ].containsKey(attribute)) {
                 val = params.genomes[ params.genome ][ attribute ]
             }
         }
-        */
         return val
     }
 }

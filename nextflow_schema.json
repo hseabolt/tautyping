@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
     "$id": "https://raw.githubusercontent.com/nf-core/tautyping/master/nextflow_schema.json",
-    "title": "nf-core/tautyping pipeline parameters",
+    "title": "tautyping pipeline parameters",
     "description": "This pipeline identifies genes or genomic segments which most closely resemble the genome-wide phylogenetic signal of a given organism using the Kendall Tau rank correlation statistic",
     "type": "object",
     "definitions": {
@@ -10,7 +10,7 @@
             "type": "object",
             "fa_icon": "fas fa-terminal",
             "description": "Define where the pipeline should find input data and save output data.",
-            "required": ["input", "outdir", "kraken2_db", "augustus_species"],
+            "required": ["input", "outdir"],
             "properties": {
                 "input": {
                     "type": "string",
@@ -35,58 +35,38 @@
                     "help_text": "Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits. If set in your user config file (`~/.nextflow/config`) then you don't need to specify this on the command line for every run.",
                     "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
                 },
-                "kraken2_db": {
-                    "type": "string",
-                    "description": "Filepath to the directory containing Kraken2 database files.",
-                    "fa_icon": "fas fa-file-signature"
-                },
-                "augustus_species": {
-                    "type": "string",
-                    "description": "Name of the species HMM model to be used for Augustus gene prediction.",
-                    "fa_icon": "fas fa-file-signature"
-                },
-                "multiqc_title": {
-                    "type": "string",
-                    "description": "MultiQC report title. Printed as page header, used for filename if not otherwise specified.",
-                    "fa_icon": "fas fa-file-signature"
-                }
             }
         },
         "reference_genome_options": {
-            "title": "Reference genome options",
+            "title": "Reference genome options for annotation transfer",
             "type": "object",
             "fa_icon": "fas fa-dna",
             "description": "Reference genome related files and options required for the workflow.",
+            "required": ["ref_fasta", "ref_gff"],
             "properties": {
-                "genome": {
-                    "type": "string",
-                    "description": "Name of iGenomes reference.",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "If using a reference genome configured in the pipeline using iGenomes, use this parameter to give the ID for the reference. This is then used to build the full paths for all required reference genome files e.g. `--genome GRCh38`. \n\nSee the [nf-core website docs](https://nf-co.re/usage/reference_genomes) for more details."
-                },
-                "fasta": {
+                "ref_fasta": {
                     "type": "string",
                     "format": "file-path",
                     "mimetype": "text/plain",
                     "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
-                    "description": "Path to FASTA genome file.",
-                    "help_text": "This parameter is *mandatory* if `--genome` is not specified. If you don't have a BWA index available this will be generated for you automatically. Combine with `--save_reference` to save BWA index for future runs.",
+                    "description": "Path to FASTA formatted reference genome file.",
                     "fa_icon": "far fa-file-code"
                 },
-                "igenomes_base": {
+				"ref_gff": {
                     "type": "string",
-                    "format": "directory-path",
-                    "description": "Directory / URL base for iGenomes references.",
-                    "default": "s3://ngi-igenomes/igenomes",
-                    "fa_icon": "fas fa-cloud-download-alt",
-                    "hidden": true
+                    "format": "file-path",
+                    "mimetype": "text/plain",
+                    "pattern": "^\\S+\\.gff(\\.gz)?$",
+                    "description": "Path to reference genome annotations file in GFF3 format.",
+                    "fa_icon": "fas fa-cloud-download-alt"
                 },
-                "igenomes_ignore": {
-                    "type": "boolean",
-                    "description": "Do not load the iGenomes reference config.",
-                    "fa_icon": "fas fa-ban",
-                    "hidden": true,
-                    "help_text": "Do not load `igenomes.config` when running the pipeline. You may choose this option if you observe clashes between custom parameters and those supplied in `igenomes.config`."
+				"feature_types": {
+                    "type": "string",
+                    "format": "file-path",
+                    "mimetype": "text/plain",
+                    "pattern": "^\\S+\\.txt$",
+                    "description": "Path to GFF feature types to transfer from the reference genome to the target genome (one feature per line).",
+                    "fa_icon": "fas fa-cloud-download-alt"
                 }
             }
         },
@@ -256,6 +236,11 @@
                     "hidden": true,
                     "fa_icon": "fas fa-bacon"
                 }
+				"tmpdir": {
+                    "type": "string",
+                    "default": "/tmp",
+                    "description": "temporary directory for shell and java processes"
+                },
             }
         }
     },
