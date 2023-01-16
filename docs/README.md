@@ -1,6 +1,6 @@
-# nf-core/tautyping: Documentation
+# hseabolt/tautyping: Documentation
 
-The nf-core/tautyping documentation is split into the following pages:
+The hseabolt/tautyping documentation is split into the following pages:
 
 - [Usage](usage.md)
   - An overview of how the pipeline works, how to run it and a description of all of the different command-line flags.

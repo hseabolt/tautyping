@@ -238,7 +238,7 @@
                 },
                 "tmpdir": {
                     "type": "string",
-                    "default": "/tmp",
+                    "default": "$projectDir/tmp",
                     "description": "temporary directory for shell and java processes"
                 }
             }
