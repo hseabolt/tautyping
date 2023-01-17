@@ -159,19 +159,17 @@ def check_samplesheet(file_in, file_out):
 
     Example:
         This function checks that the samplesheet follows the following structure,
-        see also the `annotationtransfer-nf samplesheet`_::
+        see also the `tautyping samplesheet`_::
 
-            sample,fasts
-            SAMPLE1_ID,SAMPLE1_FASTA.fasta.gz
-            SAMPLE2_ID,SAMPLE2_FASTA1.fasta
-
-    .. _annotation transfer samplesheet
+            sample,fasta
+            SAMPLE1_ID,SAMPLE1.fasta
+            SAMPLE2_ID,SAMPLE2.fasta
 
     """
     required_columns = {"sample", "fasta"}
     # See https://docs.python.org/3.9/library/csv.html#id3 to read up on `newline=""`.
     with file_in.open(newline="") as in_handle:
-        reader = csv.DictReader(in_handle, dialect=sniff_format(in_handle))
+        reader = csv.DictReader(in_handle, dialect="unix")
         # Validate the existence of the expected header columns.
         if not required_columns.issubset(reader.fieldnames):
             logger.critical(f"The sample sheet **must** contain the column headers: {', '.join(required_columns)}.")

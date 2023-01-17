@@ -2,7 +2,7 @@ process ONE_VS_ALL_FASTANI {
     tag "$meta.id"
     label 'process_medium'
 
-    conda "bioconda::fastani=1.33"
+	conda (params.enable_conda ? "bioconda::fastani=1.33" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/fastani:1.33--h0fdf51a_1' :
         'quay.io/biocontainers/fastani:1.33--h0fdf51a_1' }"
@@ -12,7 +12,7 @@ process ONE_VS_ALL_FASTANI {
     path reference
 
     output:
-    tuple val(meta), path("*.ani.txt"), emit: ani
+    path("*.fastani.sorted.txt")      , emit: ani
     path "versions.yml"               , emit: versions
 
     when:
@@ -27,6 +27,10 @@ process ONE_VS_ALL_FASTANI {
         --rl $reference \\
 		$args \\
         -o ${prefix}.ani.txt
+	
+	sed 's+\\.fa[s][t][a]++g' ${prefix}.ani.txt | \\
+	sed 's+\\/.*\\/++g' | \\
+	sort -k1,1 -k2,2 > ${prefix}.fastani.sorted.txt
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

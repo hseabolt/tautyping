@@ -3,7 +3,7 @@
 //
 // ANNOTATION_TRANSFER: Transfer GFF annotations from a reference FASTA/GFF to another closely related genome
 //
-include { LIFTOFF } from '.././modules/local/liftoff'
+include { LIFTOFF } from '../../modules/local/liftoff'
 
 
 workflow ANNOTATION_TRANSFER {
@@ -21,11 +21,12 @@ workflow ANNOTATION_TRANSFER {
         ch_versions = Channel.empty()
 		
 		// Transfer reference annotations to target genome with Liftoff
+		println "Annotation Transfer!"
 		LIFTOFF (
             ch_all_fastas, ref_fasta, ref_gff, feature_types, tmpdir
         )
         ch_gffs     = ch_gffs.mix(LIFTOFF.out.gff)
-		ch_unmapped = ch_unmapped.mix(LIFTOFF.out.unmappped)
+		ch_unmapped = ch_unmapped.mix(LIFTOFF.out.unmapped)
 		ch_versions = ch_versions.mix(LIFTOFF.out.versions)
 		
 		// TODO: Extend Liftoff post-processing here as needed

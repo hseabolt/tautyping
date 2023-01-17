@@ -13,6 +13,6 @@ process CREATE_LIST {
     script:  
     def args = task.ext.args ?: ''
     """
-	cut $args $sample_sheet > genomes.list
+	cut $args $sample_sheet | tail +2 > genomes.list
     """
 }

@@ -22,8 +22,7 @@ if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input sample
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-ch_multiqc_config        = file("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
-ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multiqc_config) : Channel.empty()
+// Currently no custom config files included
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -49,7 +48,7 @@ include { CREATE_LIST         } from '../modules/local/create_list'
 //
 // MODULE: Installed directly from nf-core/modules
 //
-include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'
+include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoftwareversions/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -59,7 +58,6 @@ include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/
 
 // Info required for completion email and summary
 def multiqc_report = []
-
 workflow TAUTYPING {
 
     ch_versions = Channel.empty()
@@ -67,63 +65,64 @@ workflow TAUTYPING {
     //
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
     //
-	ch_all_fastas = Channel.empty()
-	ch_input      = file(params.input) 
+    ch_all_fastas = Channel.empty()
+    ch_input      = file(params.input)
     INPUT_CHECK (
         ch_input
     )
     ch_versions     = ch_versions.mix(INPUT_CHECK.out.versions)
-	ch_annots_fasta = INPUT_CHECK.out.fasta
-	ch_fastani_qry  = INPUT_CHECK.out.fasta
-	
+    ch_annots_fasta = INPUT_CHECK.out.fasta
+    ch_fastani_qry  = INPUT_CHECK.out.fasta
+    
     //
     // SUBWORKFLOW: Transfer GFF annotations from a reference FASTA/GFF to another closely related genome
     //
-	ch_ref_fasta     = file(params.ref_fasta) 
-	ch_ref_gff       = file(params.ref_gff) 
-	ch_feature_types = Channel.empty()
-	ch_tmpdir        = Channel.empty()
-	if(params.feature_types != null)    {   ch_feature_types  = Channel.fromPath(params.feature_types, checkIfExists:true).first()    }
-	if(params.tmpdir != null)           {   ch_tmpdir         = Channel.fromPath(params.tmpdir, checkIfExists:true).first()           }
-    ANNOTATION_TRANSFER (
-	    ch_annots_fasta, ch_ref_fasta, ch_ref_gff, ch_feature_types, ch_tmpdir
-	}
-    ch_gffs       = ANNOTATION_TRANSFER.out.gffs
-	ch_unmapped   = ANNOTATION_TRANSFER.out.unmapped
-	ch_versions   = ch_versions.mix(ANNOTATION_TRANSFER.out.versions)
-
-    //
-	// SUBWORKFLOW: Compute one vs. all FastANI and generate a table of genome pairs
-    //
-	ch_ani         = Channel.empty()
-	CREATE_LIST (
-	   params.input
-	)
-	ch_genome_list = CREATE_LIST.out.list
-	FASTANI (
-	    ch_fastani_qry, ch_genome_list
-	)
-	ch_ani        = FASTANI.out.ani
-	ch_versions   = ch_versions.mix(FASTANI.out.versions)
-	
-	
-	//
-	// SUBWORKFLOW: Compute a provisional "pangenome" and generate all vs. all distance matrices for each core gene in the pangenome
-    // 
-	
-	//
-	// SUBWORKFLOW: Compute rank correlations between individual genes' distance matrices and WGS-based distance matrix
-	//
-	
-	
-	//
-	// SUBWORKFLOW: Construct sets from genes with the strongest rank corrlations
-	//
-	
-
-    CUSTOM_DUMPSOFTWAREVERSIONS (
-        ch_versions.unique().collectFile(name: 'collated_versions.yml')
+    ch_ref_fasta     = file(params.ref_fasta)
+    ch_ref_gff       = file(params.ref_gff)
+    ch_feature_types = Channel.empty()
+    ch_tmpdir        = Channel.empty()
+    if(params.feature_types != null)    {   ch_feature_types  = Channel.fromPath(params.feature_types, checkIfExists:true).first()    }
+    if(params.tmpdir != null)           {   
+	    def tmpDir = file(params.tmpdir)
+		tmpDir.mkdirs()
+		ch_tmpdir         = Channel.fromPath(params.tmpdir, checkIfExists:true).first()           
+    }
+	ANNOTATION_TRANSFER (
+        ch_annots_fasta, ch_ref_fasta, ch_ref_gff, ch_feature_types, ch_tmpdir
     )
+    ch_gffs       = ANNOTATION_TRANSFER.out.gffs
+    ch_unmapped   = ANNOTATION_TRANSFER.out.unmapped
+    ch_versions   = ch_versions.mix(ANNOTATION_TRANSFER.out.versions)
+
+    //
+    // SUBWORKFLOW: Compute one vs. all FastANI and generate a table of genome pairs
+    //
+    ch_ani         = Channel.empty()
+    CREATE_LIST (
+       params.input
+    )
+    ch_genome_list = CREATE_LIST.out.list
+    FASTANI (
+        ch_fastani_qry, ch_genome_list
+    )
+	ch_versions      = ch_versions.mix(FASTANI.out.versions)
+	
+    //
+    // SUBWORKFLOW: Compute a provisional "pangenome" and generate all vs. all distance matrices for each core gene in the pangenome
+    // 
+    
+    //
+    // SUBWORKFLOW: Compute rank correlations between individual genes' distance matrices and WGS-based distance matrix
+    //
+    
+    
+    //
+    // SUBWORKFLOW: Construct sets from genes with the strongest rank corrlations
+    //
+    
+    //CUSTOM_DUMPSOFTWAREVERSIONS (
+    //    ch_versions.unique().collectFile(name: 'collated_versions.yml')
+    //)
 }
 
 /*

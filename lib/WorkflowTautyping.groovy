@@ -8,8 +8,6 @@ class WorkflowTautyping {
     // Check and validate parameters
     //
     public static void initialise(params, log) {
-        genomeExistsError(params, log)
-
         if (!params.ref_fasta) {
             log.error "Reference genome FASTA file not specified with e.g. '--ref_fasta genome.fasta' or via a detectable config file."
             System.exit(1)

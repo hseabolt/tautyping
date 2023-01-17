@@ -3,8 +3,8 @@
 //
 // FASTANI: Compute one vs. all ANI using a modified version of nf-core FastANI module
 //
-include { ONE_VS_ALL_FASTANI } from '../../modules/local/one_vs_all_fastani'
-
+include { ONE_VS_ALL_FASTANI as FASTANI_ONE_VS_ALL } from '../../modules/local/one_vs_all_fastani'
+include { SORT as SORT_WGS    } from '../../modules/local/sort'
 
 workflow FASTANI {
 
@@ -17,16 +17,26 @@ workflow FASTANI {
         ch_versions = Channel.empty()
 		
 		// Transfer reference annotations to target genome with Liftoff
-		ONE_VS_ALL_FASTANI (
-            query, reflist
+		FASTANI_ONE_VS_ALL (
+            query, ref_list
         )
-        ch_ani     = ch_ani.mix(ONE_VS_ALL_FASTANI.out.ani)
-		ch_versions = ch_versions.mix(ONE_VS_ALL_FASTANI.out.versions)
+        ch_ani      = ch_ani.mix(FASTANI_ONE_VS_ALL.out.ani)
+		ch_versions = ch_versions.mix(FASTANI_ONE_VS_ALL.out.versions)
+		
+		// Collate all the individual results into one results file
+	    fastani_out = FASTANI_ONE_VS_ALL.out.ani.collectFile()
+	    fastani_out.branch{ ANI: it.name.contains('fastani.sorted.txt') }.set { result }
+	    result.ANI.collectFile(name: 'WGS.fastani.txt', storeDir: "${params.outdir}/fastani")
+		
+		// TODO: Figure out how to get this subworkflow to correctly sort the compiled WGS fastANI file
+        // SORT_WGS (
+	    //    result.ANI.collectFile(name: 'WGS.fastani.txt', storeDir: "${params.outdir}/fastani")
+	    //)
 		
 		// TODO: Extend genome relatedness comparisons (e.g. with maximum likelihood, AAI, etc.) as desired
 		
 
     emit:
-        ani      = ch_ani        // channel: [ [meta], ani  ]
-        versions = ch_versions    // channel: [ versions.yml ]
+        ani      = ch_ani                                                     // channel: [ ani  ]
+        versions = ch_versions                                                // channel: [ versions.yml ]
 }
