@@ -1,0 +1,4 @@
+CDS
+gene
+repeat_region
+pseudogene

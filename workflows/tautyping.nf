@@ -79,20 +79,14 @@ workflow TAUTYPING {
     //
     ch_ref_fasta     = file(params.ref_fasta)
     ch_ref_gff       = file(params.ref_gff)
-    ch_feature_types = Channel.empty()
-    ch_tmpdir        = Channel.empty()
-    if(params.feature_types != null)    {   ch_feature_types  = Channel.fromPath(params.feature_types, checkIfExists:true).first()    }
-    if(params.tmpdir != null)           {   
-	    def tmpDir = file(params.tmpdir)
-		tmpDir.mkdirs()
-		ch_tmpdir         = Channel.fromPath(params.tmpdir, checkIfExists:true).first()           
-    }
+    ch_feature_types = file(params.feature_types)
 	ANNOTATION_TRANSFER (
-        ch_annots_fasta, ch_ref_fasta, ch_ref_gff, ch_feature_types, ch_tmpdir
+        ch_annots_fasta, ch_ref_fasta, ch_ref_gff, ch_feature_types
     )
-    ch_gffs       = ANNOTATION_TRANSFER.out.gffs
-    ch_unmapped   = ANNOTATION_TRANSFER.out.unmapped
-    ch_versions   = ch_versions.mix(ANNOTATION_TRANSFER.out.versions)
+    ch_gffs        = ANNOTATION_TRANSFER.out.gffs
+    ch_unmapped    = ANNOTATION_TRANSFER.out.unmapped
+    ch_transcripts = ANNOTATION_TRANSFER.out.transcripts
+    ch_versions    = ch_versions.mix(ANNOTATION_TRANSFER.out.versions)
 
     //
     // SUBWORKFLOW: Compute one vs. all FastANI and generate a table of genome pairs

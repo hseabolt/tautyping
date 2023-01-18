@@ -12,7 +12,6 @@ process LIFTOFF {
 	path(refFASTA)
 	path(refGFF)
 	path(feature_types)
-	path(tmp_dir)
 
     output:
     tuple val(meta), path("*.liftoff.gff"),    emit: gff
@@ -26,14 +25,12 @@ process LIFTOFF {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def ftypes = feature_types ? "-f $feature_types" : ""
-    def tmpdir = tmp_dir ? "-dir $tmp_dir" : ""
     """
     liftoff \\
     -g $refGFF \\
     -u ${prefix}.unmapped_features.txt \\
     -o ${prefix}.liftoff.gff \\
     -p $task.cpus \\
-    $tmpdir \\
     $ftypes \\
     $args \\
     $inputFASTA \\
