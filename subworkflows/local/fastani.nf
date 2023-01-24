@@ -33,9 +33,6 @@ workflow FASTANI {
 	    //    result.ANI.collectFile(name: 'WGS.fastani.txt', storeDir: "${params.outdir}/fastani")
 	    //)
 		
-		// TODO: Extend genome relatedness comparisons (e.g. with maximum likelihood, AAI, etc.) as desired
-		
-
     emit:
         ani      = ch_ani                                                     // channel: [ ani  ]
         versions = ch_versions                                                // channel: [ versions.yml ]

@@ -36,6 +36,7 @@ if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input sample
 include { INPUT_CHECK         } from '../subworkflows/local/input_check'
 include { ANNOTATION_TRANSFER } from '../subworkflows/local/annotation_transfer'
 include { FASTANI             } from '../subworkflows/local/fastani'
+include { CORE_GENOME         } from '../subworkflows/local/core_genome'
 
 include { CREATE_LIST         } from '../modules/local/create_list'
 
@@ -104,7 +105,17 @@ workflow TAUTYPING {
     //
     // SUBWORKFLOW: Compute a provisional "pangenome" and generate all vs. all distance matrices for each core gene in the pangenome
     // 
-    
+	ch_core_alns = Channel.empty()
+	ch_pirate_results = Channel.empty()
+    CORE_GENOME (
+	   ch_transcripts, ch_gffs
+	)
+	ch_core_alns       = ch_core_alns.mix(CORE_GENOME.out.core_aln)
+    ch_pirate_results = ch_pirate_results.mix(CORE_GENOME.out.pirate_results)
+	ch_versions       = ch_versions.mix(CORE_GENOME.out.versions)
+	
+	
+	
     //
     // SUBWORKFLOW: Compute rank correlations between individual genes' distance matrices and WGS-based distance matrix
     //

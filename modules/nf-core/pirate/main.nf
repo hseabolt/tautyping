@@ -1,15 +1,16 @@
 process PIRATE {
-    tag "$meta.id"
+    //tag "$meta.id"
     label 'process_medium'
 
-    conda "bioconda::pirate=1.0.4 bioconda::perl-bioperl=1.7.2"
+    
+	conda (params.enable_conda ? "bioconda::pirate=1.0.4 bioconda::perl-bioperl=1.7.2" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/pirate:1.0.4--hdfd78af_2' :
         'quay.io/biocontainers/pirate:1.0.4--hdfd78af_2' }"
 
     input:
     tuple val(meta), path(gff)
-
+	
     output:
     tuple val(meta), path("results/*")                                   , emit: results
     tuple val(meta), path("results/core_alignment.fasta"), optional: true, emit: aln
