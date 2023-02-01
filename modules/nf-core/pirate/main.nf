@@ -23,10 +23,12 @@ process PIRATE {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
+    DIR=\$(dirname $gff)
+    
     PIRATE \\
         $args \\
         --threads $task.cpus \\
-        --input ./ \\
+        --input \$DIR \\
         --output results/
 
     cat <<-END_VERSIONS > versions.yml

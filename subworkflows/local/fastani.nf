@@ -4,7 +4,7 @@
 // FASTANI: Compute one vs. all ANI using a modified version of nf-core FastANI module
 //
 include { ONE_VS_ALL_FASTANI as FASTANI_ONE_VS_ALL } from '../../modules/local/one_vs_all_fastani'
-include { SORT as SORT_WGS    } from '../../modules/local/sort'
+include { TABLE2MATRIX as TABLE2MATRIX_WGS    } from '../../modules/local/table2matrix'
 
 workflow FASTANI {
 
@@ -28,12 +28,15 @@ workflow FASTANI {
 	    fastani_out.branch{ ANI: it.name.contains('fastani.sorted.txt') }.set { result }
 	    result.ANI.collectFile(name: 'WGS.fastani.txt', storeDir: "${params.outdir}/fastani")
 		
-		// TODO: Figure out how to get this subworkflow to correctly sort the compiled WGS fastANI file
-        // SORT_WGS (
-	    //    result.ANI.collectFile(name: 'WGS.fastani.txt', storeDir: "${params.outdir}/fastani")
-	    //)
+		// Convert the compiled WGS fastANI file to a symmetrical matrix and sort it
+        ch_wgs_matrix = Channel.empty()
+		TABLE2MATRIX_WGS (
+	        result.ANI.collectFile(name: 'WGS.fastani.txt', storeDir: "${params.outdir}/fastani")
+	    )
+		ch_wgs_matrix = ch_wgs_matrix.mix(TABLE2MATRIX_WGS.out.matrix)
 		
     emit:
-        ani      = ch_ani                                                     // channel: [ ani  ]
-        versions = ch_versions                                                // channel: [ versions.yml ]
+        ani        = ch_ani                                                     // channel: [ ani  ]
+		wgs_matrix = ch_wgs_matrix                                              // channel: [ matrix ]
+        versions   = ch_versions                                                // channel: [ versions.yml ]
 }

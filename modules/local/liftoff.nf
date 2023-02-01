@@ -81,9 +81,9 @@ process LIFTOFF_FASTA {
     $inputFASTA \\
     $refFASTA 
 	
-	echo "##FASTA" >> ${prefix}.liftoff.gff \
+	echo "##FASTA" >> ${prefix}.liftoff.gff
 	cat $inputFASTA >> ${prefix}.liftoff.gff
-    
+	
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         liftoff: \$(liftoff --version | sed 's/v//')
