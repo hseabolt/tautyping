@@ -37,6 +37,7 @@ include { INPUT_CHECK         } from '../subworkflows/local/input_check'
 include { ANNOTATION_TRANSFER } from '../subworkflows/local/annotation_transfer'
 include { FASTANI             } from '../subworkflows/local/fastani'
 include { CORE_GENOME         } from '../subworkflows/local/core_genome'
+include { RANK_CORRELATIONS   } from '../subworkflows/local/rank_correlations'
 
 include { CREATE_LIST         } from '../modules/local/create_list'
 
@@ -93,6 +94,7 @@ workflow TAUTYPING {
     // SUBWORKFLOW: Compute one vs. all FastANI and generate a table of genome pairs
     //
     ch_ani         = Channel.empty()
+    ch_wgs_matrix  = Channel.empty()
     CREATE_LIST (
        params.input
     )
@@ -100,6 +102,7 @@ workflow TAUTYPING {
     FASTANI (
         ch_fastani_qry, ch_genome_list
     )
+    ch_wgs_matrix    = FASTANI.out.wgs_matrix
 	ch_versions      = ch_versions.mix(FASTANI.out.versions)
 	
     //
@@ -110,19 +113,19 @@ workflow TAUTYPING {
     CORE_GENOME (
 	   ch_transcripts, ch_gffs
 	)
-	ch_core_alns       = ch_core_alns.mix(CORE_GENOME.out.core_aln)
+	ch_core_alns      = ch_core_alns.mix(CORE_GENOME.out.core_aln)
     ch_pirate_results = ch_pirate_results.mix(CORE_GENOME.out.pirate_results)
 	ch_versions       = ch_versions.mix(CORE_GENOME.out.versions)
-	
-	
 	
     //
     // SUBWORKFLOW: Compute rank correlations between individual genes' distance matrices and WGS-based distance matrix
     //
-    
+    //RANK_CORRELATIONS (
+    //    ch_wgs_matrix, core_gene_matrices, "kendall"
+    //)
     
     //
-    // SUBWORKFLOW: Construct sets from genes with the strongest rank corrlations
+    // SUBWORKFLOW: Construct sets from genes with the strongest rank correlations
     //
     
     //CUSTOM_DUMPSOFTWAREVERSIONS (

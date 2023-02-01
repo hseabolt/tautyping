@@ -22,6 +22,7 @@ workflow CORE_GENOME {
 		
 		// Compute a pangenome and core alignments
 		ch_gffs.collect{meta, gff -> gff}.map{ gff -> [[id: 'pangenome'], gff]}.set{ ch_merge_gff }
+        //ch_merge_gff.view()
 		PIRATE (
             ch_merge_gff
         )

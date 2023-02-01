@@ -1,7 +1,6 @@
 process PIRATE {
-    //tag "$meta.id"
+    tag "$meta.id"
     label 'process_medium'
-
     
 	conda (params.enable_conda ? "bioconda::pirate=1.0.4 bioconda::perl-bioperl=1.7.2" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -23,12 +22,10 @@ process PIRATE {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    DIR=\$(dirname $gff)
-    
     PIRATE \\
         $args \\
         --threads $task.cpus \\
-        --input \$DIR \\
+        --input ./ \\
         --output results/
 
     cat <<-END_VERSIONS > versions.yml
