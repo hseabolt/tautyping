@@ -1,19 +1,20 @@
 process TABLE2MATRIX {
+    tag "$meta.id"
     label "process_low"
 
     input:
-    path(table)
+    tuple val(meta), path(table)
 
     output:
-	path "*.matrix"               , emit: matrix
-	
+    tuple val(meta), path("*.dist")               , emit: dist
+    
     when:
     task.ext.when == null || task.ext.when
 
-    script:  
+    script:
     def args = task.ext.args ?: ''
-	def prefix = task.ext.prefix ?: 'matrix'
-	"""
-	table2matrix -i $table $args > ${prefix}.matrix
-	"""
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    table2matrix -i $table $args > ${prefix}.dist
+    """
 }
