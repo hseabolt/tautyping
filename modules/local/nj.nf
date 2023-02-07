@@ -1,6 +1,7 @@
 process NJ_R {
     tag "$meta.id"
     label 'process_low'
+    label 'error_ignore'
 
 	conda (params.enable_conda ? "conda-forge::r-phangorn=2.11.1" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -23,7 +24,14 @@ process NJ_R {
 
     library(phangorn)
 	matrix <- as.matrix(read.table(file="$matrix", header=T, row.names=1, sep="\\t"))
-	tr <- NJ(matrix)
-	write.tree(tr, file="${prefix}.nj.nwk")
+    if ( dim(matrix)[1] > 3 ) {
+	    tr <- NJ(matrix)
+	    write.tree(tr, file="${prefix}.nj.nwk")
+    } else {
+        file_out <- file("${prefix}.nj.nwk")
+        str <- paste(row.names(matrix)[1], ":0.0;", sep='')
+        writeLines(str, file_out)
+        close(file_out)
+    }
     """
 }

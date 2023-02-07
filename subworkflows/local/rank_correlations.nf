@@ -8,9 +8,9 @@ include { CORRELATIONS_R                       } from '../../modules/local/corre
 workflow RANK_CORRELATIONS {
 
     take:
-        ch_matrix1    // REQUIRED channel:  [matrix1      ]
-		ch_matrix2    // REQUIRED channel:  [meta, matrix2]   
-        ch_method     // REQUIRED channel:  [correlation  ]
+        ch_matrix1    // REQUIRED channel:  [ meta, matrix1 ]
+		ch_matrix2    // REQUIRED channel:  [ meta, matrix2 ]   
+        ch_method     // REQUIRED channel:  [ correlation   ]
 		
     main:
         ch_correlations = Channel.empty()
@@ -23,7 +23,7 @@ workflow RANK_CORRELATIONS {
 
 		// Collate all the individual results into one results file
 	    correlations_out = CORRELATIONS_R.out.correlation.collectFile()
-	    correlations_out.branch{ COR: it.name.contains('*.txt') }.set { result }
+	    correlations_out.branch{ COR: it.name.contains("*.kendall.txt") }.set { result }
 	    result.COR.collectFile(name: 'correlations.txt', storeDir: "${params.outdir}/correlations")
 
     emit:

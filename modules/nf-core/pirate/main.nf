@@ -11,9 +11,11 @@ process PIRATE {
     tuple val(meta), path(gff)
 	
     output:
-    tuple val(meta), path("results/*")                                   , emit: results
-    tuple val(meta), path("results/core_alignment.fasta"), optional: true, emit: aln
-    path "versions.yml"                                                  , emit: versions
+    tuple val(meta), path("results/*")                                        , emit: results
+    tuple val(meta), path("results/core_alignment.fasta"), optional: true     , emit: aln
+    tuple val(meta), path("results/pangenome_alignment.fasta"), optional: true, emit: pangenome
+	path("results/feature_sequences/*.nucleotide.fasta"), optional: true      , emit: genes
+    path "versions.yml"                                                       , emit: versions
 
     when:
     task.ext.when == null || task.ext.when

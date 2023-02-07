@@ -102,27 +102,28 @@ workflow TAUTYPING {
     FASTANI (
         ch_fastani_qry, ch_genome_list
     )
-    ch_wgs_matrix    = FASTANI.out.wgs_matrix
+    ch_wgs_matrix    = FASTANI.out.wgs_matrix.collect()
 	ch_versions      = ch_versions.mix(FASTANI.out.versions)
 	
     //
     // SUBWORKFLOW: Compute a provisional "pangenome" and generate all vs. all distance matrices for each core gene in the pangenome
     // 
 	ch_core_alns = Channel.empty()
-	ch_pirate_results = Channel.empty()
+	ch_genes = Channel.empty()
     CORE_GENOME (
 	   ch_transcripts, ch_gffs
 	)
 	ch_core_alns      = ch_core_alns.mix(CORE_GENOME.out.core_aln)
-    ch_pirate_results = ch_pirate_results.mix(CORE_GENOME.out.pirate_results)
+    ch_genes          = ch_genes.mix(CORE_GENOME.out.dists)
 	ch_versions       = ch_versions.mix(CORE_GENOME.out.versions)
 	
     //
     // SUBWORKFLOW: Compute rank correlations between individual genes' distance matrices and WGS-based distance matrix
     //
-    //RANK_CORRELATIONS (
-    //    ch_wgs_matrix, core_gene_matrices, "kendall"
-    //)
+    ch_method = Channel.of("kendall")
+    RANK_CORRELATIONS (
+        ch_wgs_matrix, ch_genes, ch_method
+    )
     
     //
     // SUBWORKFLOW: Construct sets from genes with the strongest rank correlations
