@@ -99,8 +99,9 @@ workflow TAUTYPING {
        params.input
     )
     ch_genome_list = CREATE_LIST.out.list
+    ch_mappings = CREATE_LIST.out.basenames
     FASTANI (
-        ch_fastani_qry, ch_genome_list
+        ch_fastani_qry, ch_genome_list, ch_mappings
     )
     ch_wgs_matrix    = FASTANI.out.wgs_matrix.collect()
 	ch_versions      = ch_versions.mix(FASTANI.out.versions)
@@ -122,7 +123,7 @@ workflow TAUTYPING {
     //
     ch_method = Channel.of("kendall")
     RANK_CORRELATIONS (
-        ch_wgs_matrix, ch_genes, ch_method
+        ch_wgs_matrix, ch_genes, ch_method.first()
     )
     
     //

@@ -12,8 +12,8 @@ kappa,/scicomp/home-pure/ngr8/SCBS/sc2_tautyping/assets/genomes/kappa_1.fasta
 mu_B-1-621,/scicomp/home-pure/ngr8/SCBS/sc2_tautyping/assets/genomes/mu_B.1.621_1.fasta
 NC_045512,/scicomp/home-pure/ngr8/SCBS/sc2_tautyping/assets/genomes/NC_045512.2.fasta
 om_B-1-1-29,/scicomp/home-pure/ngr8/SCBS/sc2_tautyping/assets/genomes/om_B.1.1.529_1.fasta
-om_BA-1,/scicomp/home-pure/ngr8/SCBS/sc2_tautyping/assets/genomes/om_BA.1.1_1.fasta
-om_BA-1,/scicomp/home-pure/ngr8/SCBS/sc2_tautyping/assets/genomes/om_BA.1_1.fasta
+om_BA-1a,/scicomp/home-pure/ngr8/SCBS/sc2_tautyping/assets/genomes/om_BA.1.1_1.fasta
+om_BA-1b,/scicomp/home-pure/ngr8/SCBS/sc2_tautyping/assets/genomes/om_BA.1_1.fasta
 om_BA-2,/scicomp/home-pure/ngr8/SCBS/sc2_tautyping/assets/genomes/om_BA.2_1.fasta
 om_BA-3,/scicomp/home-pure/ngr8/SCBS/sc2_tautyping/assets/genomes/om_BA.3_1.fasta
 om_BA-4,/scicomp/home-pure/ngr8/SCBS/sc2_tautyping/assets/genomes/om_BA.4_1.fasta

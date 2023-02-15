@@ -4,6 +4,7 @@
 // FASTANI: Compute one vs. all ANI using a modified version of nf-core FastANI module
 //
 include { ONE_VS_ALL_FASTANI as FASTANI_ONE_VS_ALL } from '../../modules/local/one_vs_all_fastani'
+include { FASTANI_POSTPROC                         } from '../../modules/local/postproc_fastani'
 include { TABLE2MATRIX as TABLE2MATRIX_WGS         } from '../../modules/local/table2matrix'
 include { NJ_R as NJ_WGS                           } from '../../modules/local/nj'
 
@@ -12,6 +13,7 @@ workflow FASTANI {
     take:
         query       // REQUIRED channel:  [meta, fasta]
         ref_list    // REQUIRED filepath: path to file containing all genomes to compute ANI vs the query genome.
+		names_map    // REQUIRED filepath: path to a tabular mapping file for FastANI post-processing.
 		
     main:
 	    ch_ani      = Channel.empty()
@@ -27,15 +29,17 @@ workflow FASTANI {
 		// Collate all the individual results into one results file
 	    fastani_out = FASTANI_ONE_VS_ALL.out.ani.collectFile()
 	    fastani_out.branch{ ANI: it.name.contains('fastani.sorted.txt') }.set { result }
-	    //result.ANI.collectFile(name: 'WGS.fastani.txt', storeDir: "${params.outdir}/fastani")
 		ch_wgs_ani = result.ANI.collectFile(name: 'WGS.fastani.txt', storeDir: "${params.outdir}/fastani")
 
 		// Convert the compiled WGS fastANI file to a symmetrical matrix and sort it
         ch_wgs_matrix = Channel.empty()
 		ch_meta = Channel.of( ['id' : 'WGS'] )
 		ch_wgs_ani = ch_meta.combine(ch_wgs_ani)
+		FASTANI_POSTPROC (
+			ch_wgs_ani, names_map
+		)
 		TABLE2MATRIX_WGS (
-	        ch_wgs_ani
+	        FASTANI_POSTPROC.out.ani
 	    )
 		ch_wgs_matrix = ch_wgs_matrix.mix(TABLE2MATRIX_WGS.out.dist)
 

@@ -20,15 +20,26 @@ process CORRELATIONS_R {
 
     matrix1 <- as.matrix(read.table("$matrix1", head=T, row.names=1))
     matrix2 <- as.matrix(read.table("$matrix2", head=T, row.names=1))
+    file_out <- file("${prefix}.${method}.txt")
     if ( identical(dim(matrix1),dim(matrix2)) ) {
         corr <- cor.test(matrix1, matrix2, method="$method")
-        df <- as.data.frame(c("${prefix}", corr\$estimate))
-        write.table(df, file="${prefix}.${method}.txt")
-    } else {
-        file_out <- file("${prefix}.bad_compute.txt")
-        str <- paste("Matrix dimensions are incompatible -- cannot compute rank correlation!", sep='')
+        str <- paste("${prefix}", round(corr\$estimate,4), nrow(matrix1), nrow(matrix2), sep="\\t")
         writeLines(str, file_out)
-        close(file_out)
+    } else if ( nrow(matrix2) == 1 ) {
+        str <- paste("${prefix}", "NA", nrow(matrix1), nrow(matrix2), sep="\\t")
+        writeLines(str, file_out)
+    } else {
+        row_names_to_remove <- setdiff(rownames(matrix1), rownames(matrix2))
+        matrix1.rm <- matrix1[!(row.names(matrix1) %in% row_names_to_remove),]
+        matrix1.rm <- t(matrix1.rm)
+        matrix1.rm <- matrix1.rm[!(row.names(matrix1.rm) %in% row_names_to_remove),]
+        d1 <- as.character(dim(matrix1.rm))
+        d2 <- as.character(dim(matrix2))
+        writeLines(d1, file_out)
+        writeLines(d2, file_out)
+        corr <- cor.test(matrix1.rm, matrix2, method="$method")
+        str <- paste("${prefix}", round(corr\$estimate,4), nrow(matrix1), nrow(matrix2), sep="\\t")
+        writeLines(str, file_out)
     }
     """
 }
