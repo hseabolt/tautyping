@@ -3,8 +3,9 @@
 //
 // ANNOTATION_TRANSFER: Transfer GFF annotations from a reference FASTA/GFF to another closely related genome
 //
+include { PREPARE_REFERENCE        } from '../../modules/local/prepare_reference'
 include { LIFTOFF_FASTA as LIFTOFF } from '../../modules/local/liftoff'
-include { GFFREAD } from '../../modules/nf-core/gffread/main'
+include { GFFREAD                  } from '../../modules/nf-core/gffread/main'
 
 
 workflow ANNOTATION_TRANSFER {
@@ -20,6 +21,13 @@ workflow ANNOTATION_TRANSFER {
         ch_unmapped = Channel.empty()
         ch_versions = Channel.empty()
 		
+        // Prepare reference GFF for Liftoff if not already in the needed format
+        PREPARE_REFERENCE (
+            ref_fasta, ref_gff
+        )
+        ref_fasta = PREPARE_REFERENCE.out.fasta
+        ref_gff   = PREPARE_REFERENCE.out.gff
+
 		// Transfer reference annotations to target genome with Liftoff
 		LIFTOFF (
             ch_all_fastas, ref_fasta, ref_gff, feature_types 
@@ -27,9 +35,6 @@ workflow ANNOTATION_TRANSFER {
         ch_gffs     = ch_gffs.mix(LIFTOFF.out.gff)
 		ch_unmapped = ch_unmapped.mix(LIFTOFF.out.unmapped)
 		ch_versions = ch_versions.mix(LIFTOFF.out.versions)
-		
-		// Extend Liftoff post-processing here as needed
-		// Consider post-processing GFFs from Liftoff for specific feature types
      
         // Extracting transcript sequences from each genome
         ch_transcripts = Channel.empty()

@@ -4,10 +4,15 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
+def valid_params = [
+    correlation       : ['pearson', 'kendall', 'spearman'],
+    distance          : ['ani', 'likelihood'],
+]
+
 def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 
 // Validate input parameters
-WorkflowTautyping.initialise(params, log)
+WorkflowTautyping.initialise(params, log, valid_params)
 
 // Check input path parameters to see if they exist
 def checkPathParamList = [ params.input, params.ref_fasta, params.ref_gff, params.feature_types ]
@@ -90,46 +95,59 @@ workflow TAUTYPING {
     ch_transcripts = ANNOTATION_TRANSFER.out.transcripts
     ch_versions    = ch_versions.mix(ANNOTATION_TRANSFER.out.versions)
 
-    //
-    // SUBWORKFLOW: Compute one vs. all FastANI and generate a table of genome pairs
-    //
-    ch_ani         = Channel.empty()
-    ch_wgs_matrix  = Channel.empty()
+    // MODULE: Create some list files to be used downstream
     CREATE_LIST (
        params.input
     )
     ch_genome_list = CREATE_LIST.out.list
     ch_mappings = CREATE_LIST.out.basenames
-    FASTANI (
-        ch_fastani_qry, ch_genome_list, ch_mappings
-    )
-    ch_wgs_matrix    = FASTANI.out.wgs_matrix.collect()
-	ch_versions      = ch_versions.mix(FASTANI.out.versions)
-	
+
+    //
+    // SUBWORKFLOW: Compute one vs. all FastANI and generate a table of genome pairs
+    //
+    ch_ani         = Channel.empty()
+    ch_ml          = Channel.empty()
+    ch_wgs_matrix  = Channel.empty()
+    if ( params.distance == 'ani') {
+        FASTANI (
+            ch_fastani_qry, ch_genome_list, ch_mappings
+        )
+        ch_wgs_matrix    = FASTANI.out.wgs_matrix.collect()
+        ch_versions      = ch_versions.mix(FASTANI.out.versions)
+    }
+    else {
+        // TODO: Maxmimum likelihood subworkflow under construction!
+    }
+
     //
     // SUBWORKFLOW: Compute a provisional "pangenome" and generate all vs. all distance matrices for each core gene in the pangenome
     // 
 	ch_core_alns = Channel.empty()
 	ch_genes = Channel.empty()
+    ch_dists = Channel.empty()
     CORE_GENOME (
 	   ch_transcripts, ch_gffs
 	)
 	ch_core_alns      = ch_core_alns.mix(CORE_GENOME.out.core_aln)
-    ch_genes          = ch_genes.mix(CORE_GENOME.out.dists)
+    ch_genes          = ch_genes.mix(CORE_GENOME.out.genes)
+    ch_dists          = ch_dists.mix(CORE_GENOME.out.dists)
 	ch_versions       = ch_versions.mix(CORE_GENOME.out.versions)
 	
     //
     // SUBWORKFLOW: Compute rank correlations between individual genes' distance matrices and WGS-based distance matrix
     //
-    ch_method = Channel.of("kendall")
+    ch_method = Channel.of(params.correlation)
+    ch_correlations = Channel.empty()
     RANK_CORRELATIONS (
-        ch_wgs_matrix, ch_genes, ch_method.first()
+        ch_wgs_matrix, ch_dists, ch_method.first()
     )
+    ch_correlations = ch_correlations.mix(RANK_CORRELATIONS.out.correlations)
+    ch_correlations = ch_correlations.join(ch_genes).view()
     
     //
     // SUBWORKFLOW: Construct sets from genes with the strongest rank correlations
     //
-    
+
     //CUSTOM_DUMPSOFTWAREVERSIONS (
     //    ch_versions.unique().collectFile(name: 'collated_versions.yml')
     //)

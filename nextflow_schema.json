@@ -70,6 +70,42 @@
                 }
             }
         },
+		"set construction options": {
+            "title": "Set construction options",
+            "type": "object",
+            "fa_icon": "fas fa-university",
+            "description": "Parameters for constructing sets of typing genes.",
+            "properties": {
+				"n": {
+                    "type": "integer",
+                    "default": 10,
+                    "description": "Construct sets from this many genes with the best phylogenetic signal"
+                },
+				"k": {
+                    "type": "integer",
+                    "default": 3,
+                    "description": "Size of gene sets to construct"
+		        }
+            }
+        },
+		"correlation options": {
+            "title": "Rank correlation compute options",
+            "type": "object",
+            "fa_icon": "fas fa-university",
+            "description": "Parameters for computing genetic distance and correlation measures.",
+            "properties": {
+				"correlation": {
+                    "type": "string",
+                    "default": "kendall",
+                    "description": "Correlation measure to use"
+                },
+				"distance": {
+                    "type": "string",
+                    "default": "ani",
+                    "description": "Method used for calculating genetic distances"
+		        }
+            }
+        },
         "institutional_config_options": {
             "title": "Institutional config options",
             "type": "object",

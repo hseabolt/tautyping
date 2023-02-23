@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 
 //
-// CORE_GENOME: Compute a core genome and output alignments plus distance matrices for each core gene feature
+// RANK CORRELATIONS: Compute a rank correlations between distance matrices, then collate and sort.
 //
 include { CORRELATIONS_R                       } from '../../modules/local/correlations'
 include { CAT_CAT as CAT                       } from '../../modules/nf-core/cat/cat/main'

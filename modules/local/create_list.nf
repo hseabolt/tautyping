@@ -1,6 +1,11 @@
 process CREATE_LIST {
     label 'process_low'
 
+    conda (params.enable_conda ? "conda-forge::pigz=2.3.4" : null)
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/pigz:2.3.4' :
+        'quay.io/biocontainers/pigz:2.3.4' }"
+
     input:
     path(sample_sheet)
 
@@ -14,7 +19,7 @@ process CREATE_LIST {
     script:  
     def args = task.ext.args ?: ''
     """
-	cut $args $sample_sheet | tail +2 > genomes.list
+	cut $args $sample_sheet | tail -n +2 > genomes.list
     
     for i in `tail +2 $sample_sheet`; do \\
         base=\$(basename \$i .fasta)
