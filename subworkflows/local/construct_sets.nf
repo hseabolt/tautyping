@@ -15,6 +15,7 @@ workflow CONSTRUCT_SETS {
     main:
         // Take sorted correlations file, parse into [[meta{id, corr}], aln file]
         
+        
 
         // From user-given n (=n top ranking genes) and k (=number of genes), construct n choose k sets
 

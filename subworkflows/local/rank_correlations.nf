@@ -12,13 +12,16 @@ workflow RANK_CORRELATIONS {
     take:
         ch_matrix1    // REQUIRED channel:  [ meta1, matrix1 ]
 		ch_matrix2    // REQUIRED channel:  [ meta2, matrix2 ]   
-        ch_method     // REQUIRED channel:  [ correlation   ]
+        ch_method     // REQUIRED channel:  [ correlation    ]
+        ch_genes      // REQUIRED channel:  [ meta3, fasta   ]
 		
     main:
         ch_correlations = Channel.empty()    
+        ch_versions     = Channel.empty()
 
 		// Compute rank correlations for all genes previously computed with PIRATE vs. WGS
         // Note: The Rscript here does handle matrices with different dimensions
+        ch_matrix2 = ch_matrix2.join(ch_genes)
 		CORRELATIONS_R (
             ch_matrix1, ch_matrix2, ch_method
         )
@@ -30,6 +33,7 @@ workflow RANK_CORRELATIONS {
         CAT (
             ch_merge_correlations
         )
+        ch_version = ch_versions.mix(CAT.out.versions)
         SORT (
             CAT.out.file_out
         )
@@ -37,4 +41,5 @@ workflow RANK_CORRELATIONS {
     emit:
         correlations       = ch_correlations       // channel: [ [meta], correlations        ]
         sorted_corrs       = ch_sorted             // channel: [ [meta], sorted_all          ]
+        versions           = ch_versions           // channel: [ versions.yml                ]
 }

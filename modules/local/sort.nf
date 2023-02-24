@@ -11,15 +11,17 @@ process SORT {
     tuple val(meta), path(file_in)
 
     output:
-    tuple val(meta), path("*.sorted.txt"), emit: file_out
+    tuple val(meta), path("*.sorted.csv"), emit: file_out
 	
     when:
     task.ext.when == null || task.ext.when
 
     script:  
 	def args = task.ext.args ?: ''
+    def header = task.ext.header ?: ''
     def prefix = task.ext.prefix ?: "${file_in.SimpleName}"
     """
-	sort $args ${file_in} > ${prefix}.sorted.txt
+    echo ${header} > ${prefix}.sorted.csv
+	sort $args ${file_in} | sed 's/\\t/,/g' >> ${prefix}.sorted.csv
     """
 }

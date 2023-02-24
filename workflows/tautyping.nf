@@ -43,8 +43,9 @@ include { ANNOTATION_TRANSFER } from '../subworkflows/local/annotation_transfer'
 include { FASTANI             } from '../subworkflows/local/fastani'
 include { CORE_GENOME         } from '../subworkflows/local/core_genome'
 include { RANK_CORRELATIONS   } from '../subworkflows/local/rank_correlations'
+include { PREPROCESS_SETS     } from '../subworkflows/local/preproc_sets'
+include { CONSTRUCT_SETS      } from '../subworkflows/local/construct_sets'
 
-include { CREATE_LIST         } from '../modules/local/create_list'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -55,6 +56,7 @@ include { CREATE_LIST         } from '../modules/local/create_list'
 //
 // MODULE: Installed directly from nf-core/modules
 //
+include { CREATE_LIST                 } from '../modules/local/create_list'
 include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoftwareversions/main'
 
 /*
@@ -136,17 +138,32 @@ workflow TAUTYPING {
     //
     // SUBWORKFLOW: Compute rank correlations between individual genes' distance matrices and WGS-based distance matrix
     //
-    ch_method = Channel.of(params.correlation)
+    ch_method       = Channel.of(params.correlation)
     ch_correlations = Channel.empty()
+    ch_sorted_corrs = Channel.empty()
     RANK_CORRELATIONS (
-        ch_wgs_matrix, ch_dists, ch_method.first()
+        ch_wgs_matrix, ch_dists, ch_method.first(), ch_genes
     )
     ch_correlations = ch_correlations.mix(RANK_CORRELATIONS.out.correlations)
-    ch_correlations = ch_correlations.join(ch_genes).view()
-    
+    ch_sorted_corrs = ch_sorted_corrs.mix(RANK_CORRELATIONS.out.sorted_corrs)
+    ch_version      = ch_versions.mix(RANK_CORRELATIONS.out.versions)
+
+    //
+    // SUBWORKFLOW: Construct required channels for subsequent set construction
+    //
+    ch_preproc_sets = Channel.empty()
+    PREPROCESS_SETS(
+        ch_sorted_corrs
+    )
+    ch_preproc_sets = ch_preproc_sets.mix(PREPROCESS_SETS.out.fasta)
+
     //
     // SUBWORKFLOW: Construct sets from genes with the strongest rank correlations
     //
+    //CONSTRUCT_SETS(
+    //    ch_correlations, params.n, params.k
+    //)
+    //ch_versions       = ch_versions.mix(CORE_GENOME.out.versions)
 
     //CUSTOM_DUMPSOFTWAREVERSIONS (
     //    ch_versions.unique().collectFile(name: 'collated_versions.yml')

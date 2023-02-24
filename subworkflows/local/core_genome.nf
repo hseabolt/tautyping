@@ -47,9 +47,11 @@ workflow CORE_GENOME {
             ch_pan_aln.map{ meta, fasta -> fasta }
         )
         ch_blastdb = ch_blastdb.mix(MAKEBLASTDB.out.db).collect()
+        ch_version = ch_versions.mix(MAKEBLASTDB.out.versions)
         BLASTN(
             ch_genes, ch_blastdb
         )
+        ch_version = ch_versions.mix(BLASTN.out.versions)
         TABLE2MATRIX (
 	        BLASTN.out.txt
 	    )
