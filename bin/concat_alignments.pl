@@ -46,7 +46,7 @@ my $output = "--";
 my $fix_headers;
 my $match_ends;
 my $inputlist;
-my $randsample;
+my $randsample = 1;
 my $v;
 
 sub usage {
@@ -73,7 +73,7 @@ GetOptions(	'input|i=s' => \$ali,
 
 # Set default outfmt unless specified
 $output = ($output && $output ne "--" || $output ne "stdout")? $output : "--";
-$randsample =  ($randsample && $randsample <= 1 )? 0 : $randsample;
+$randsample =  ($randsample && $randsample <= 1 )? 1 : $randsample;
 $v = defined($v)? 1 : 0;
 
 # Read in the list if a list is given

@@ -79,12 +79,17 @@
 				"n": {
                     "type": "integer",
                     "default": 10,
-                    "description": "Construct sets from this many genes with the best phylogenetic signal"
+                    "description": "Construct sets from N genes with the highest correlation coefficients"
                 },
 				"k": {
                     "type": "integer",
                     "default": 3,
-                    "description": "Size of gene sets to construct"
+                    "description": "Construct sets of size K"
+		        },
+				"m": {
+                    "type": "integer",
+                    "default": 3,
+                    "description": "Return M sets of genes"
 		        }
             }
         },

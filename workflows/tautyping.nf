@@ -45,7 +45,7 @@ include { CORE_GENOME         } from '../subworkflows/local/core_genome'
 include { RANK_CORRELATIONS   } from '../subworkflows/local/rank_correlations'
 include { PREPROCESS_SETS     } from '../subworkflows/local/preproc_sets'
 include { CONSTRUCT_SETS      } from '../subworkflows/local/construct_sets'
-
+include { CREATE_LIST         } from '../modules/local/create_list'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -56,7 +56,7 @@ include { CONSTRUCT_SETS      } from '../subworkflows/local/construct_sets'
 //
 // MODULE: Installed directly from nf-core/modules
 //
-include { CREATE_LIST                 } from '../modules/local/create_list'
+
 include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoftwareversions/main'
 
 /*
@@ -146,24 +146,29 @@ workflow TAUTYPING {
     )
     ch_correlations = ch_correlations.mix(RANK_CORRELATIONS.out.correlations)
     ch_sorted_corrs = ch_sorted_corrs.mix(RANK_CORRELATIONS.out.sorted_corrs)
-    ch_version      = ch_versions.mix(RANK_CORRELATIONS.out.versions)
+    ch_versions      = ch_versions.mix(RANK_CORRELATIONS.out.versions)
 
     //
     // SUBWORKFLOW: Construct required channels for subsequent set construction
     //
     ch_preproc_sets = Channel.empty()
     PREPROCESS_SETS(
-        ch_sorted_corrs
+        ch_sorted_corrs, params.n, params.k
     )
     ch_preproc_sets = ch_preproc_sets.mix(PREPROCESS_SETS.out.fasta)
 
     //
     // SUBWORKFLOW: Construct sets from genes with the strongest rank correlations
     //
-    //CONSTRUCT_SETS(
-    //    ch_correlations, params.n, params.k
-    //)
-    //ch_versions       = ch_versions.mix(CORE_GENOME.out.versions)
+    ch_sets      = Channel.empty()
+    ch_sets_dist = Channel.empty()
+    CONSTRUCT_SETS(
+        ch_preproc_sets
+    )
+    ch_sets    = ch_sets.mix(CONSTRUCT_SETS.out.sets)
+    ch_sets_dist = ch_sets_dist.mix(CONSTRUCT_SETS.out.dists)
+    ch_versions = ch_versions.mix(CONSTRUCT_SETS.out.versions)
+
 
     //CUSTOM_DUMPSOFTWAREVERSIONS (
     //    ch_versions.unique().collectFile(name: 'collated_versions.yml')

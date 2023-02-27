@@ -1,0 +1,164 @@
+#!/usr/bin/env perl
+
+# power_set2.pl v0.1.0
+# Author: MH Seabolt
+# Last updated: 2-27-2023
+
+# SYNOPSIS
+# Computes the power set of an input Set (can be a MultiSet)
+# Output is in "list" format, one element per line for all unique elements in the resulting power set.
+# Use the -multiset flag to compute the power set if you want to treat the input Set as a Bag/Multiset.
+# WARNING: Any headers should be removed prior to passing incoming data to this script. 
+
+##################################################################################
+# The MIT License
+#
+# Copyright (c) 2023 Matthew H. Seabolt
+#
+# Permission is hereby granted, free of charge, 
+# to any person obtaining a copy of this software and 
+# associated documentation files (the "Software"), to 
+# deal in the Software without restriction, including 
+# without limitation the rights to use, copy, modify, 
+# merge, publish, distribute, sublicense, and/or sell 
+# copies of the Software, and to permit persons to whom 
+# the Software is furnished to do so, 
+# subject to the following conditions:
+#
+# The above copyright notice and this permission notice 
+# shall be included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
+# OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
+# IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR 
+# ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
+# TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
+# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+##################################################################################
+
+use strict;
+use warnings; no warnings 'once';
+use Getopt::Long qw(GetOptions);
+use List::Util qw(reduce);
+
+# GetOpts Variable declarations
+my $input = "--";
+my $output = "--";
+my $outfmt;
+my $n;
+my $k;
+my $m;
+my $bag= 0;
+my $header = 0;
+
+sub usage {
+	my $usage = "power_set2.pl v0.1.0\n
+				PURPOSE: Computes the power set of an input Set (can be a MultiSet)
+						Output is in \"list\" format, one element per line for all unique elements in the resulting power set.
+						Use the -bag flag to compute the power set if you want to treat the input Set as a Bag/Multiset.
+						WARNING: Any headers should be removed prior to passing incoming data to this script. 
+	\n
+	USAGE:	power_set2.pl v0.1.0 -i setA -n 10 -k 3 -m 3 -o power_set.list
+	
+	=== INPUT OPTIONS ====
+	-i		FILE; Input set (can be piped in from STDIN)
+	-m 		(Optional) INT flag; Treat the input Set as a MultiSet when computing the power set? ( Default OFF )
+	
+	=== SET CONSTRUCTION OPTIONS ===
+	-n		INT; Construct sets from N elements appearing first in the input set (Default: use all elements)
+	-k      INT; Construct sets of size K ( Default: all sets )
+	-m      INT; Return M sets ( Default: all sets of size K )
+	
+	=== OUTPUT OPTIONS
+	-o 		STR; Output file name
+	-f      STR; Output data separator ( Default: tab )
+	-h      (Optional) INT flag; Give each computed set a unique name? ( Default OFF )
+	
+\n";
+	print $usage;
+}
+
+GetOptions(	'input|i=s'  => \$input, 
+			'out|o=s'    => \$output,
+			'bag|b=i'    => \$bag,	
+			'outfmt|f=s' => \$outfmt,
+			'm=i'        => \$m,
+			'n=i'        => \$n,
+			'k=i'        => \$k,
+			'header|h=i' => \$header,
+) or die usage();
+
+# Parameter setups
+$bag = ( $bag == 1 )? 1 : 0;
+$header = ( $header == 1 )? 1 : 0;
+$outfmt = ( $outfmt && $outfmt ne "\t" )? $outfmt : "\t";
+$m = ( $m && $m > 0 )? $m : -1;
+$n = ( $n && $n > 2 )? $n : -1;
+$k = ( $k && $k > 0 )? $k :  0;
+
+##################################################################################
+# Read the input data file, expecting a tabular matrix with headers and columns
+my $fh = *STDIN;
+my $succin = open(SET, "<", "$input") if ( $input ne "--" && -e $input );
+$fh = *SET if ( $succin ); 
+
+# Open the output filehand
+my $succout = open( OUT, ">", "$output" ) if $output ne "--";
+my $fhout;
+if ( $succout )		{	$fhout = *OUT;		}
+else				{	$fhout = *STDOUT;	}
+
+# Operate on Set A line-by-line
+# Woe to ye who include column or row names in your Sets,
+#   those names will end up in the union as elements.
+my %SetA;
+while ( <$fh> )		{
+	chomp $_;
+	last if ( $. == $n + 1 );
+	$SetA{$_}++;
+}
+close $fh if ( $succin );
+
+
+# Compute the power set with List::Util reduce as a subroutine
+my @powerset;
+if ( $bag == 1 )	{
+	my @bag;
+	foreach my $element ( keys %SetA )	{
+		push @bag, $element foreach ( 0 .. $SetA{$element} );
+	}
+	@powerset = powerset( @bag );
+}
+else 	{
+	@powerset = powerset( keys %SetA );
+}
+
+# Print the power set elements
+my $printed_sets = 0;
+my $unique_number = 1;
+foreach ( @powerset )	{
+	my $unique_name = ( $header == 1 )? "Set$unique_number" : '';
+	if ( $k == 0 )	{
+		print $fhout join("$outfmt", $unique_name, join(",", @{$_})), "\n";
+		$printed_sets++;
+		$unique_number++;
+	}
+	elsif ( scalar @{$_} == $k )	{
+		print $fhout join("$outfmt", $unique_name, join(",", @{$_})), "\n";
+		$printed_sets++;
+		$unique_number++;
+	}
+	last if ( $printed_sets == $m );
+	
+}
+close $fhout if ( $succout );
+exit;
+
+############################## SUBROUTINES #######################################
+
+# The subroutine comes courtesy of Rosetta code: https://rosettacode.org/wiki/Power_set
+# Thanks nameless contributor!
+sub powerset {
+    @{( reduce { [@$a, map([@$_, $b], @$a)] } [[]], @_ )};
+}
