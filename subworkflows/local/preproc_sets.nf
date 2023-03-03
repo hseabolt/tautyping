@@ -9,10 +9,11 @@ workflow PREPROCESS_SETS {
     corrsheet        // channel: [ val(meta), file(/path/to/correlations.csv) ]
     ch_n             // value  : params.n
     ch_k             // value  : params.k
-    //ch_m             // value  : params.m
+    ch_kmin          // value  : params.kmin
+    ch_kmax          // value  : params.kmax
 
     main:
-    PREP_SETS( corrsheet, ch_n, ch_k)
+    PREP_SETS( corrsheet, ch_n, ch_k, ch_kmin, ch_kmax )
         .csv
         .splitCsv ( header:true, sep:"\t" )
         .map { create_fastalist_channel(it) }

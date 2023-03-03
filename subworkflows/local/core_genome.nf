@@ -44,7 +44,7 @@ workflow CORE_GENOME {
         ch_nwk     = Channel.empty()
         ch_blastdb = Channel.empty()
         MAKEBLASTDB(
-            ch_pan_aln.map{ meta, fasta -> fasta }
+            ch_core_aln.map{ meta, fasta -> fasta }
         )
         ch_blastdb = ch_blastdb.mix(MAKEBLASTDB.out.db).collect()
         ch_version = ch_versions.mix(MAKEBLASTDB.out.versions)

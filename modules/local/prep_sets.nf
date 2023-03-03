@@ -10,18 +10,31 @@ process PREP_SETS {
     tuple val(meta), path(file_in)
     val(n)
     val(k)
+    val(kmin)
+    val(kmax)
 
     output:
     path '*.csv'       , emit: csv
 
     script: 
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def awk    = task.ext.awk ?: ""
+    def ps2_k_args = ""
+    if (kmin != -1 && kmax != -1) {
+        ps2_k_args = "-kmin ${kmin} -kmax ${kmax}"
+    } else if (kmax && kmin == -1)   {
+        ps2_k_args = "-kmax ${kmax}"
+    } else if (kmin && kmax == -1)   {
+        ps2_k_args = "-kmin ${kmin}"
+    } else {
+        ps2_k_args = "-k ${k}"
+    }
     """
     echo -e "sample\tset" > ${prefix}.csv
     tail -n +2 ${file_in} | \\
     grep -v ",NA," | \\
-    awk 'BEGIN { FS = "," } ; { if (\$3 == \$4) print } ; END { OFS = ","}' | \\
+    ${awk} \\
     cut -f5 -d, | \\
-    power_set2 -n ${n} -k ${k} -h 1 >> ${prefix}.csv
+    power_set2 -n ${n} ${ps2_k_args} -h 1 >> ${prefix}.csv
     """
 }

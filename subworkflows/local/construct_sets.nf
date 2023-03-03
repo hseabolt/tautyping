@@ -5,7 +5,7 @@
 //
 include { CONCAT_ALIGNMENTS                       } from '../../modules/local/concat_alignments'
 include { BLAST_MAKEBLASTDB as MAKEBLASTDB_UNIQUE } from '../../modules/local/makeblastdb_unique'
-include { BLASTN_SETS as BLASTN                    } from '../../modules/local/blastn_sets'
+include { BLASTN_SETS as BLASTN                   } from '../../modules/local/blastn_sets'
 include { TABLE2MATRIX                            } from '../../modules/local/table2matrix'
 include { NJ_R as NJ                              } from '../../modules/local/nj'
 
@@ -17,7 +17,6 @@ workflow CONSTRUCT_SETS {
     main:
         // Take sorted correlations file, parse into [[meta{id, corr, frx}], aln file]
         ch_sets     = Channel.empty()
-        ch_versions = Channel.empty()
 
         // From the set of pre-prepared sets, concatenate the selected alignments
         CONCAT_ALIGNMENTS (
@@ -35,11 +34,9 @@ workflow CONSTRUCT_SETS {
             ch_sets
         )
         ch_blastdb = ch_blastdb.mix(MAKEBLASTDB_UNIQUE.out.db).collect()
-        ch_versions = ch_versions.mix(MAKEBLASTDB_UNIQUE.out.versions)
         BLASTN(
             ch_sets, ch_blastdb
         )
-        ch_versions = ch_versions.mix(BLASTN.out.versions)
         TABLE2MATRIX (
 	        BLASTN.out.txt
 	    )
@@ -52,5 +49,4 @@ workflow CONSTRUCT_SETS {
     emit:
         sets       = ch_sets           // channel: [ [meta], concat aln  ]
         dists      = ch_dists          // channel: [ [meta], dists       ]
-        versions   = ch_versions       // channel: [ versions.yml        ]
 }

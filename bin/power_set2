@@ -48,30 +48,34 @@ my $output = "--";
 my $outfmt;
 my $n;
 my $k;
+my $kmin;
+my $kmax;
 my $m;
 my $bag= 0;
 my $header = 0;
 
 sub usage {
 	my $usage = "power_set2.pl v0.1.0\n
-				PURPOSE: Computes the power set of an input Set (can be a MultiSet)
-						Output is in \"list\" format, one element per line for all unique elements in the resulting power set.
-						Use the -bag flag to compute the power set if you want to treat the input Set as a Bag/Multiset.
-						WARNING: Any headers should be removed prior to passing incoming data to this script. 
+    PURPOSE: Computes the power set of an input Set (can be a MultiSet)
+    Output is in \"list\" format, one element per line for all unique elements in the resulting power set.
+    Use the -bag flag to compute the power set if you want to treat the input Set as a Bag/Multiset.
+    WARNING: Any headers should be removed prior to passing incoming data to this script. 
 	\n
-	USAGE:	power_set2.pl v0.1.0 -i setA -n 10 -k 3 -m 3 -o power_set.list
+    USAGE:	power_set2.pl v0.1.0 -i setA -n 10 -k 3 -m 3 -o power_set.list
 	
 	=== INPUT OPTIONS ====
-	-i		FILE; Input set (can be piped in from STDIN)
-	-m 		(Optional) INT flag; Treat the input Set as a MultiSet when computing the power set? ( Default OFF )
+	-i      FILE; Input set (can be piped in from STDIN)
+	-m      (Optional) INT flag; Treat the input Set as a MultiSet when computing the power set? ( Default OFF )
 	
 	=== SET CONSTRUCTION OPTIONS ===
-	-n		INT; Construct sets from N elements appearing first in the input set (Default: use all elements)
+	-n      INT; Construct sets from N elements appearing first in the input set (Default: use all elements)
 	-k      INT; Construct sets of size K ( Default: all sets )
+	-kmin   INT; Minimum set size to construct
+	-kmax   INT; Maximum set size to construct
 	-m      INT; Return M sets ( Default: all sets of size K )
 	
 	=== OUTPUT OPTIONS
-	-o 		STR; Output file name
+	-o      STR; Output file name
 	-f      STR; Output data separator ( Default: tab )
 	-h      (Optional) INT flag; Give each computed set a unique name? ( Default OFF )
 	
@@ -86,6 +90,8 @@ GetOptions(	'input|i=s'  => \$input,
 			'm=i'        => \$m,
 			'n=i'        => \$n,
 			'k=i'        => \$k,
+			'kmin=i'     => \$kmin,
+			'kmax=i'     => \$kmax,
 			'header|h=i' => \$header,
 ) or die usage();
 
@@ -120,6 +126,10 @@ while ( <$fh> )		{
 }
 close $fh if ( $succin );
 
+# Set kmin and kmax
+$kmin = ( $kmin && $kmin >= 1 )? $kmin : 1;
+$kmax = ( $kmax && $kmax >= 1 )? $kmax: 2**(scalar keys %SetA);
+($kmin, $kmax ) = ( $kmax, $kmin ) if ( $kmax < $kmin );
 
 # Compute the power set with List::Util reduce as a subroutine
 my @powerset;
@@ -138,14 +148,20 @@ else 	{
 my $printed_sets = 0;
 my $unique_number = 1;
 foreach ( @powerset )	{
-	my $unique_name = ( $header == 1 )? "Set$unique_number" : '';
-	if ( $k == 0 )	{
-		print $fhout join("$outfmt", $unique_name, join(",", @{$_})), "\n";
+	next if ( scalar @{$_} == 0 );			# Skip the empty set ()
+	my $unique_name = ( $header == 1 )? "Set$unique_number$outfmt" : '';
+	if ( $k == 0 && not ($kmin || $kmax) )	{
+		print $fhout $unique_name, join("$outfmt",  join(",", @{$_})), "\n";
 		$printed_sets++;
 		$unique_number++;
 	}
-	elsif ( scalar @{$_} == $k )	{
-		print $fhout join("$outfmt", $unique_name, join(",", @{$_})), "\n";
+	elsif ( ($k && scalar @{$_} == $k) )	{ 
+		print $fhout $unique_name, join("$outfmt", join(",", @{$_})), "\n";
+		$printed_sets++;
+		$unique_number++;
+	}
+	elsif ( $k == 0 && (($kmin && scalar @{$_} >= $kmin) && ($kmax && scalar @{$_} <= $kmax)) ) 	{ 
+		print $fhout $unique_name, join("$outfmt", join(",", @{$_})), "\n";
 		$printed_sets++;
 		$unique_number++;
 	}

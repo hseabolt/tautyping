@@ -7,4 +7,4 @@ The hseabolt/tautyping documentation is split into the following pages:
 - [Output](output.md)
   - An overview of the different results produced by the pipeline and how to interpret them.
 
-You can find a lot more documentation about installing, configuring and running nf-core pipelines on the website: [https://nf-co.re](https://nf-co.re)
+You can find a lot more documentation about installing, configuring and running Nextflow pipelines written in nf-core style on the website: [https://nf-co.re](https://nf-co.re)

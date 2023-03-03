@@ -4,10 +4,10 @@
 // RANK CORRELATIONS: Compute a rank correlations between distance matrices, then collate and sort.
 //
 include { CORRELATIONS_R                       } from '../../modules/local/correlations'
-include { CAT_CAT as CAT                       } from '../../modules/nf-core/cat/cat/main'
-include { SORT                                 } from '../../modules/local/sort'
+include { CAT_CAT as CAT_SETS                  } from '../../modules/nf-core/cat/cat/main'
+include { SORT as SORT_SETS                    } from '../../modules/local/sort'
 
-workflow RANK_CORRELATIONS {
+workflow RANK_CORRELATIONS_SETS {
 
     take:
         ch_matrix1    // REQUIRED channel:  [ meta1, matrix1 ]
@@ -28,16 +28,17 @@ workflow RANK_CORRELATIONS {
         ch_correlations = ch_correlations.mix(CORRELATIONS_R.out.correlation)
 
 		// Collate all the individual results into one results file
-        ch_correlations.collect{meta, corr -> corr}.map{ corr -> [[id: "genes"], corr]}.set{ ch_merge_correlations }
+        ch_correlations.collect{meta, corr -> corr}.map{ corr -> [[id: "sets"], corr]}.set{ ch_merge_correlations }
         ch_sorted = Channel.empty()
-        CAT (
+        CAT_SETS (
             ch_merge_correlations
         )
-        ch_versions = ch_versions.mix(CAT.out.versions)
-        SORT (
-            CAT.out.file_out
+        ch_versions = ch_versions.mix(CAT_SETS.out.versions)
+        SORT_SETS (
+            CAT_SETS.out.file_out
         )
-        ch_sorted = ch_sorted.mix(SORT.out.file_out)
+        ch_sorted = ch_sorted.mix(SORT_SETS.out.file_out)
+
     emit:
         correlations       = ch_correlations       // channel: [ [meta], correlations        ]
         sorted_corrs       = ch_sorted             // channel: [ [meta], sorted_all          ]

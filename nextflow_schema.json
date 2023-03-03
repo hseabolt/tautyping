@@ -86,10 +86,15 @@
                     "default": 3,
                     "description": "Construct sets of size K"
 		        },
-				"m": {
+				"kmin": {
                     "type": "integer",
                     "default": 3,
-                    "description": "Return M sets of genes"
+                    "description": "Minimum set size to construct.  Incompatible with --k option"
+		        },
+				"kmax": {
+                    "type": "integer",
+                    "default": 3,
+                    "description": "Maximum set size to construct.  Incompatible with --k option"
 		        }
             }
         },

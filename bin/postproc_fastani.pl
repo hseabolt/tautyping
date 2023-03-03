@@ -67,6 +67,7 @@ while ( <MAP> )		{
 	my @line = split("\t", $_);
 	foreach ( @line ) {
 		$_ =~ s/\s+//;
+		$_ =~ s/\.fa[s][t][a]$//;
 	}
 	$Map{$line[0]} = $line[1];
 	$Map{$line[1]} = $line[0];

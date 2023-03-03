@@ -18,17 +18,19 @@ process BLAST_BLASTN {
     when:
     task.ext.when == null || task.ext.when
 
-    script:
+    script:           // This module code has been modified from it's original nf-core form
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     DB=`find -L ./ -name "*.ndb" | sed 's/\\.ndb\$//'`
+    sed '/^>/! s/-//g' ${fasta} > ${prefix}.no_gaps.fasta
     blastn \\
         -num_threads $task.cpus \\
         -db \$DB \\
-        -query $fasta \\
+        -query ${prefix}.no_gaps.fasta \\
         $args \\
         -out ${prefix}.blastn.txt
+    rm ${prefix}.no_gaps.fasta
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         blast: \$(blastn -version 2>&1 | sed 's/^.*blastn: //; s/ .*\$//')

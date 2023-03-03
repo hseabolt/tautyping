@@ -1,6 +1,6 @@
 process PIRATE {
     tag "$meta.id"
-    label 'process_medium'
+    label 'process_high'
     
 	conda (params.enable_conda ? "bioconda::pirate=1.0.4 bioconda::perl-bioperl=1.7.2" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

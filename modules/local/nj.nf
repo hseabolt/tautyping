@@ -24,6 +24,9 @@ process NJ_R {
 
     library(phangorn)
 	matrix <- as.matrix(read.table(file="$matrix", header=T, row.names=1, sep="\\t"))
+	if ( max(matrix) == 100 ) {
+		matrix <- 100 - matrix
+	}
     if ( dim(matrix)[1] > 3 ) {
 	    tr <- NJ(matrix)
 	    write.tree(tr, file="${prefix}.nj.nwk")

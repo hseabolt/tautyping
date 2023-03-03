@@ -38,14 +38,15 @@ if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input sample
 //
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
-include { INPUT_CHECK         } from '../subworkflows/local/input_check'
-include { ANNOTATION_TRANSFER } from '../subworkflows/local/annotation_transfer'
-include { FASTANI             } from '../subworkflows/local/fastani'
-include { CORE_GENOME         } from '../subworkflows/local/core_genome'
-include { RANK_CORRELATIONS   } from '../subworkflows/local/rank_correlations'
-include { PREPROCESS_SETS     } from '../subworkflows/local/preproc_sets'
-include { CONSTRUCT_SETS      } from '../subworkflows/local/construct_sets'
-include { CREATE_LIST         } from '../modules/local/create_list'
+include { INPUT_CHECK             } from '../subworkflows/local/input_check'
+include { ANNOTATION_TRANSFER     } from '../subworkflows/local/annotation_transfer'
+include { FASTANI                 } from '../subworkflows/local/fastani'
+include { CORE_GENOME             } from '../subworkflows/local/core_genome'
+include { RANK_CORRELATIONS       } from '../subworkflows/local/rank_correlations'
+include { RANK_CORRELATIONS_SETS  } from '../subworkflows/local/rank_correlations_sets'
+include { PREPROCESS_SETS         } from '../subworkflows/local/preproc_sets'
+include { CONSTRUCT_SETS          } from '../subworkflows/local/construct_sets'
+include { CREATE_LIST             } from '../modules/local/create_list'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -153,7 +154,7 @@ workflow TAUTYPING {
     //
     ch_preproc_sets = Channel.empty()
     PREPROCESS_SETS(
-        ch_sorted_corrs, params.n, params.k
+        ch_sorted_corrs, params.n, params.k, params.kmin, params.kmax
     )
     ch_preproc_sets = ch_preproc_sets.mix(PREPROCESS_SETS.out.fasta)
 
@@ -165,14 +166,15 @@ workflow TAUTYPING {
     CONSTRUCT_SETS(
         ch_preproc_sets
     )
-    ch_sets    = ch_sets.mix(CONSTRUCT_SETS.out.sets)
+    ch_sets      = ch_sets.mix(CONSTRUCT_SETS.out.sets)
     ch_sets_dist = ch_sets_dist.mix(CONSTRUCT_SETS.out.dists)
-    ch_versions = ch_versions.mix(CONSTRUCT_SETS.out.versions)
 
-
-    //CUSTOM_DUMPSOFTWAREVERSIONS (
-    //    ch_versions.unique().collectFile(name: 'collated_versions.yml')
-    //)
+    //
+    // SUBWORKFLOW: Compute rank correlations between gene sets' distance matrices and WGS-based distance matrix
+    //
+    RANK_CORRELATIONS_SETS (
+        ch_wgs_matrix, ch_sets_dist, ch_method.first(), ch_sets
+    )
 }
 
 /*
