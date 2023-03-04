@@ -30,11 +30,11 @@ process PREP_SETS {
         ps2_k_args = "-k ${k}"
     }
     """
-    echo -e "sample\tset" > ${prefix}.csv
-    tail -n +2 ${file_in} | \\
-    grep -v ",NA," | \\
+    grep -v ",NA," ${file_in} | \\
     ${awk} \\
-    cut -f5 -d, | \\
-    power_set2 -n ${n} ${ps2_k_args} -h 1 >> ${prefix}.csv
+    cut -f5 -d, > sets.tmp
+    echo -e "sample\tset" > ${prefix}.csv
+    power_set2 -i sets.tmp -n ${n} ${ps2_k_args} -h 1 >> ${prefix}.csv
+    rm sets.tmp
     """
 }

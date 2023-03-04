@@ -31,14 +31,14 @@ process CORRELATIONS_R {
         writeLines(str, file_out)
     } else {
         row_names_to_remove <- setdiff(rownames(matrix1), rownames(matrix2))
+        col_names_to_remove <- setdiff(colnames(matrix1), colnames(matrix2))
         matrix1.rm <- matrix1[!(row.names(matrix1) %in% row_names_to_remove),]
         matrix1.rm <- t(matrix1.rm)
-        matrix1.rm <- matrix1.rm[!(row.names(matrix1.rm) %in% row_names_to_remove),]
-        d1 <- as.character(dim(matrix1.rm))
-        d2 <- as.character(dim(matrix2))
-        writeLines(d1, file_out)
-        writeLines(d2, file_out)
-        corr <- cor.test(matrix1.rm, matrix2, method="$method")
+        matrix1.rm <- matrix1.rm[!(row.names(matrix1.rm) %in% col_names_to_remove),]
+        matrix2.rm <- matrix2[!(row.names(matrix2) %in% row_names_to_remove),]
+        matrix2.rm <- t(matrix2.rm)
+        matrix2.rm <- matrix2.rm[!(row.names(matrix2.rm) %in% col_names_to_remove),]
+        corr <- cor.test(matrix1.rm, matrix2.rm, method="$method")
         str <- paste("${prefix}", round(corr\$estimate,4), nrow(matrix1), nrow(matrix2), normalizePath("${fasta}"), sep=",")
         writeLines(str, file_out)
     }
