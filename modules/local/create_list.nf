@@ -1,7 +1,7 @@
 process CREATE_LIST {
     label 'process_low'
 
-    conda (params.enable_conda ? "conda-forge::perl=5.32.1" : null)
+    conda "conda-forge::perl=5.32.1"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/perl:5.26.2' :
         'quay.io/biocontainers/perl:5.26.2' }"

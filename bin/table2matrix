@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 # table2matrix.pl v0.1.0
 # Author: MH Seabolt

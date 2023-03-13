@@ -1,38 +1,24 @@
-# ![nf-core/tautyping](docs/images/nf-core-tautyping_logo_light.png#gh-light-mode-only) ![nf-core/tautyping](docs/images/nf-core-tautyping_logo_dark.png#gh-dark-mode-only)
-
-[![GitHub Actions CI Status](https://github.com/nf-core/tautyping/workflows/nf-core%20CI/badge.svg)](https://github.com/nf-core/tautyping/actions?query=workflow%3A%22nf-core+CI%22)
-[![GitHub Actions Linting Status](https://github.com/nf-core/tautyping/workflows/nf-core%20linting/badge.svg)](https://github.com/nf-core/tautyping/actions?query=workflow%3A%22nf-core+linting%22)
-[![AWS CI](https://img.shields.io/badge/CI%20tests-full%20size-FF9900?logo=Amazon%20AWS)](https://nf-co.re/tautyping/results)
-[![Cite with Zenodo](http://img.shields.io/badge/DOI-10.5281/zenodo.XXXXXXX-1073c8)](https://doi.org/10.5281/zenodo.XXXXXXX)
-
-[![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A521.10.3-23aa62.svg)](https://www.nextflow.io/)
-[![run with conda](http://img.shields.io/badge/run%20with-conda-3EB049?logo=anaconda)](https://docs.conda.io/en/latest/)
-[![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?logo=docker)](https://www.docker.com/)
-[![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg)](https://sylabs.io/docs/)
-[![Launch on Nextflow Tower](https://img.shields.io/badge/Launch%20%F0%9F%9A%80-Nextflow%20Tower-%234256e7)](https://tower.nf/launch?pipeline=https://github.com/nf-core/tautyping)
-
-[![Get help on Slack](http://img.shields.io/badge/slack-nf--core%20%23tautyping-4A154B?logo=slack)](https://nfcore.slack.com/channels/tautyping)
-[![Follow on Twitter](http://img.shields.io/badge/twitter-%40nf__core-1DA1F2?logo=twitter)](https://twitter.com/nf_core)
-[![Watch on YouTube](http://img.shields.io/badge/youtube-nf--core-FF0000?logo=youtube)](https://www.youtube.com/c/nf-core)
+# ![Tau-typing](docs/images/tautyping_logo_light.png#gh-light-mode-only) 
 
 ## Introduction
 
-<!-- TODO nf-core: Write a 1-2 sentence summary of what data the pipeline is for and what it does -->
+**Tau-typing** is a bioinformatics analysis pipeline tuned for identifying genes or genomic segments which most closely reflect the genome-wide phylogenetic signal of a given organism using the rank correlation statistics (Kendall's tau or Spearman's rho).
 
-**nf-core/tautyping** is a bioinformatics best-practice analysis pipeline for This pipeline identifies genes or genomic segments which most closely resemble the genome-wide phylogenetic signal of a given organism using the Kendall Tau rank correlation statistic.
+The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It uses Docker/Singularity containers making installation trivial and results highly reproducible. The [Nextflow DSL2](https://www.nextflow.io/docs/latest/dsl2.html) implementation of this pipeline uses one container per process which makes it much easier to maintain and update software dependencies. Where possible, these processes have been installed from [nf-core/modules](https://github.com/nf-core/modules).
 
-The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It uses Docker/Singularity containers making installation trivial and results highly reproducible. The [Nextflow DSL2](https://www.nextflow.io/docs/latest/dsl2.html) implementation of this pipeline uses one container per process which makes it much easier to maintain and update software dependencies. Where possible, these processes have been submitted to and installed from [nf-core/modules](https://github.com/nf-core/modules) in order to make them available to all nf-core pipelines, and to everyone within the Nextflow community!
+Development and testing of this pipeline used `singularity` as the container technology and `Sun Grid Engine` (SGE) for testing on cluster environments. 
 
-<!-- TODO nf-core: Add full-sized test dataset and amend the paragraph below if applicable -->
-
-On release, automated continuous integration tests run the pipeline on a full-sized dataset on the AWS cloud infrastructure. This ensures that the pipeline runs on AWS, has sensible resource allocation defaults set to run on real-world datasets, and permits the persistent storage of results to benchmark between pipeline releases and other analysis sources. The results obtained from the full-sized test can be viewed on the [nf-core website](https://nf-co.re/tautyping/results).
 
 ## Pipeline summary
 
-<!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
-
-1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
-2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
+1. Transfer annotations ([`Liftoff`](https://academic.oup.com/bioinformatics/article/37/12/1639/6035128))
+2. Extract features ([`GFFRead`](https://github.com/gpertea/gffread))
+3. Compare genome sequences - ANI or Maximum Likelihood ([`FastANI`](https://www.nature.com/articles/s41467-018-07641-9), [`Phangorn`](https://academic.oup.com/bioinformatics/article/27/4/592/198887))
+4. Compute the core genomes ([`PIRATE`](https://academic.oup.com/gigascience/article/8/10/giz119/5584409))
+5. Rank individual features against WGS (Custom ([`R`](https://www.r-project.org/)) scripts)
+6. Create sets of features from best-correlating features (Custom ([`Perl`](https://www.perl.org/)) scripts)
+7. Rank sets against WGS (Custom ([`R`](https://www.r-project.org/)) scripts)
+8. Tabulate results ([`MultiQC`](http://multiqc.info/))
 
 ## Quick Start
 
@@ -43,7 +29,7 @@ On release, automated continuous integration tests run the pipeline on a full-si
 3. Download the pipeline and test it on a minimal dataset with a single command:
 
    ```console
-   nextflow run nf-core/tautyping -profile test,YOURPROFILE --outdir <OUTDIR>
+   nextflow run hseabolt/tautyping -profile test,<YOURPROFILE> --outdir <OUTDIR>
    ```
 
    Note that some form of configuration will be needed so that Nextflow knows how to fetch the required software. This is usually done in the form of a config profile (`YOURPROFILE` in the example command above). You can chain multiple config profiles in a comma-separated string.
@@ -55,36 +41,35 @@ On release, automated continuous integration tests run the pipeline on a full-si
 
 4. Start running your own analysis!
 
-   <!-- TODO nf-core: Update the example "typical command" below used to run the pipeline -->
-
    ```console
-   nextflow run nf-core/tautyping --input samplesheet.csv --outdir <OUTDIR> --genome GRCh37 -profile <docker/singularity/podman/shifter/charliecloud/conda/institute>
+   nextflow run hseabolt/tautyping --input samplesheet.csv --outdir <OUTDIR> -profile <docker/singularity/podman/shifter/charliecloud/conda/institute>
    ```
 
 ## Documentation
 
-The nf-core/tautyping pipeline comes with documentation about the pipeline [usage](https://nf-co.re/tautyping/usage), [parameters](https://nf-co.re/tautyping/parameters) and [output](https://nf-co.re/tautyping/output).
+The Tau-typing pipeline comes with documentation about the pipeline [usage](https://github.com/hseabolt/tautyping/usage), [parameters](https://github.com/hseabolt/tautyping/parameters) and [output](https://github.com/hseabolt/tautyping/output).
 
 ## Credits
 
-nf-core/tautyping was originally written by hseabolt.
+Tau-typing was originally written by hseabolt.
 
 We thank the following people for their extensive assistance in the development of this pipeline:
-
-<!-- TODO nf-core: If applicable, make list of people who have also contributed -->
 
 ## Contributions and Support
 
 If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
 
-For further information or help, don't hesitate to get in touch on the [Slack `#tautyping` channel](https://nfcore.slack.com/channels/tautyping) (you can join with [this invite](https://nf-co.re/join/slack)).
-
 ## Citations
 
-<!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi and badge at the top of this file. -->
-<!-- If you use  nf-core/tautyping for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
+If you use Tau-typing for your analysis, please cite it using the following citation: 
 
-<!-- TODO nf-core: Add bibliography of tools and data used in your pipeline -->
+> **Tau-typing: a Nextflow pipeline enabling on-demand, high-resolution molecular typing for pathogen genomics**
+>
+> Matthew H. Seabolt, Arun K. Boddapati, Joshua J. Forstedt, Kostantinos T. Konstantinidis.  
+>
+> Tau-typing: a Nextflow pipeline enabling on-demand, high-resolution molecular typing for pathogen genomics.
+>
+> _To be submitted to Bioinformatics_
 
 An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
 

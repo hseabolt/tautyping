@@ -2,6 +2,11 @@ process CORRELATIONS_R {
     tag "$meta2.id"
     label 'process_low'
 
+    conda "conda-forge::r-plotly=4.10.1"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/r-plotly:4.5.6--r3.3.2_0' :
+        'quay.io/biocontainers/r-plotly:4.5.6--r3.3.2_0' }"
+
     input:
     tuple val(meta1), path(matrix1)
     tuple val(meta2), path(matrix2), path(fasta)

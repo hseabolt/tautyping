@@ -8,6 +8,7 @@ include { BLAST_MAKEBLASTDB as MAKEBLASTDB_UNIQUE } from '../../modules/local/ma
 include { BLASTN_SETS as BLASTN                   } from '../../modules/local/blastn_sets'
 include { TABLE2MATRIX                            } from '../../modules/local/table2matrix'
 include { NJ_R as NJ                              } from '../../modules/local/nj'
+include { PHANGORN_ML                          } from '../../modules/local/phangorn_ml'
 
 workflow CONSTRUCT_SETS {
 
@@ -30,17 +31,24 @@ workflow CONSTRUCT_SETS {
         ch_dists   = Channel.empty()
         ch_nwk     = Channel.empty()
         ch_blastdb = Channel.empty()
-        MAKEBLASTDB_UNIQUE (
-            ch_sets
-        )
-        ch_blastdb = ch_blastdb.mix(MAKEBLASTDB_UNIQUE.out.db).collect()
-        BLASTN(
-            ch_sets, ch_blastdb
-        )
-        TABLE2MATRIX (
-	        BLASTN.out.txt
-	    )
-        ch_dists = ch_dists.mix(TABLE2MATRIX.out.dist)
+        if ( params.distance == 'ani' ) {
+            MAKEBLASTDB_UNIQUE (
+                ch_sets
+            )
+            ch_blastdb = ch_blastdb.mix(MAKEBLASTDB_UNIQUE.out.db).collect()
+            BLASTN(
+                ch_sets, ch_blastdb
+            )
+            TABLE2MATRIX (
+                BLASTN.out.txt
+            )
+            ch_dists = ch_dists.mix(TABLE2MATRIX.out.dist)
+        } else {
+            PHANGORN_ML (
+                ch_sets
+            )
+            ch_dists = ch_dists.mix(PHANGORN_ML.out.dist)
+        }
 		NJ (
 			ch_dists
 		)

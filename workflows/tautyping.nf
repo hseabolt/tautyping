@@ -27,7 +27,16 @@ if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input sample
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-// Currently no custom config files included
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    CONFIG FILES
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
+ch_multiqc_config          = Channel.fromPath("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
+ch_multiqc_custom_config   = params.multiqc_config ? Channel.fromPath( params.multiqc_config, checkIfExists: true ) : Channel.empty()
+ch_multiqc_logo            = params.multiqc_logo   ? Channel.fromPath( params.multiqc_logo, checkIfExists: true ) : Channel.empty()
+ch_multiqc_custom_methods_description = params.multiqc_methods_description ? file(params.multiqc_methods_description, checkIfExists: true) : file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -38,15 +47,20 @@ if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input sample
 //
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
-include { INPUT_CHECK             } from '../subworkflows/local/input_check'
-include { ANNOTATION_TRANSFER     } from '../subworkflows/local/annotation_transfer'
-include { FASTANI                 } from '../subworkflows/local/fastani'
-include { CORE_GENOME             } from '../subworkflows/local/core_genome'
-include { RANK_CORRELATIONS       } from '../subworkflows/local/rank_correlations'
-include { RANK_CORRELATIONS_SETS  } from '../subworkflows/local/rank_correlations_sets'
-include { PREPROCESS_SETS         } from '../subworkflows/local/preproc_sets'
-include { CONSTRUCT_SETS          } from '../subworkflows/local/construct_sets'
-include { CREATE_LIST             } from '../modules/local/create_list'
+include { INPUT_CHECK                    } from '../subworkflows/local/input_check'
+include { ANNOTATION_TRANSFER            } from '../subworkflows/local/annotation_transfer'
+include { FASTANI                        } from '../subworkflows/local/fastani'
+include { CORE_GENOME                    } from '../subworkflows/local/core_genome'
+include { RANK_CORRELATIONS              } from '../subworkflows/local/rank_correlations'
+include { RANK_CORRELATIONS_SETS         } from '../subworkflows/local/rank_correlations_sets'
+include { PREPROCESS_SETS                } from '../subworkflows/local/preproc_sets'
+include { CONSTRUCT_SETS                 } from '../subworkflows/local/construct_sets'
+include { CREATE_LIST                    } from '../modules/local/create_list'
+include { NJ_R as NJ_ML                  } from '../modules/local/nj'
+include { FASTTREE                       } from '../modules/nf-core/fasttree/main'
+include { PHANGORN_ML as PHANGORN_ML_WGS } from '../modules/local/phangorn_ml'
+include { MULTIQC                        } from '../modules/nf-core/multiqc/main'
+include { CUSTOM_DUMPSOFTWAREVERSIONS    } from '../modules/nf-core/custom/dumpsoftwareversions/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -58,7 +72,7 @@ include { CREATE_LIST             } from '../modules/local/create_list'
 // MODULE: Installed directly from nf-core/modules
 //
 
-include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoftwareversions/main'
+
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -68,6 +82,7 @@ include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoft
 
 // Info required for completion email and summary
 def multiqc_report = []
+
 workflow TAUTYPING {
 
     ch_versions = Channel.empty()
@@ -108,18 +123,17 @@ workflow TAUTYPING {
     //
     // SUBWORKFLOW: Compute one vs. all FastANI and generate a table of genome pairs
     //
-    ch_ani         = Channel.empty()
-    ch_ml          = Channel.empty()
     ch_wgs_matrix  = Channel.empty()
+    ch_wgs_tree    = Channel.empty()
+    ch_wgs_plots   = Channel.empty()
     if ( params.distance == 'ani') {
         FASTANI (
             ch_fastani_qry, ch_genome_list, ch_mappings
         )
         ch_wgs_matrix    = FASTANI.out.wgs_matrix.collect()
+        ch_wgs_tree      = ch_wgs_tree.mix(FASTANI.out.wgs_nwk_plot)
+        ch_wgs_plots     = ch_wgs_plots.mix(FASTANI.out.wgs_plots)
         ch_versions      = ch_versions.mix(FASTANI.out.versions)
-    }
-    else {
-        // TODO: Maxmimum likelihood subworkflow under construction!
     }
 
     //
@@ -128,6 +142,7 @@ workflow TAUTYPING {
 	ch_core_alns = Channel.empty()
 	ch_genes = Channel.empty()
     ch_dists = Channel.empty()
+    
     CORE_GENOME (
 	   ch_transcripts, ch_gffs
 	)
@@ -135,19 +150,36 @@ workflow TAUTYPING {
     ch_genes          = ch_genes.mix(CORE_GENOME.out.genes)
     ch_dists          = ch_dists.mix(CORE_GENOME.out.dists)
 	ch_versions       = ch_versions.mix(CORE_GENOME.out.versions)
-	
+
+    if ( params.distance == 'likelihood') {
+        PHANGORN_ML_WGS (
+            ch_core_alns
+        )
+        ch_wgs_matrix    = PHANGORN_ML_WGS.out.dist.collect()
+        FASTTREE (
+            ch_core_alns.collect{it[1]}
+        )
+        ch_versions       = ch_versions.mix(FASTTREE.out.versions)
+        NJ_ML (
+            ch_wgs_matrix
+        )
+        ch_wgs_tree      = ch_wgs_tree.mix(NJ_ML.out.png)
+    }
+
     //
     // SUBWORKFLOW: Compute rank correlations between individual genes' distance matrices and WGS-based distance matrix
     //
     ch_method       = Channel.of(params.correlation)
     ch_correlations = Channel.empty()
     ch_sorted_corrs = Channel.empty()
+    ch_histograms   = Channel.empty()
     RANK_CORRELATIONS (
         ch_wgs_matrix, ch_dists, ch_method.first(), ch_genes
     )
     ch_correlations = ch_correlations.mix(RANK_CORRELATIONS.out.correlations)
     ch_sorted_corrs = ch_sorted_corrs.mix(RANK_CORRELATIONS.out.sorted_corrs)
-    ch_versions      = ch_versions.mix(RANK_CORRELATIONS.out.versions)
+    ch_histograms   = ch_histograms.mix(RANK_CORRELATIONS.out.png)
+    ch_versions     = ch_versions.mix(RANK_CORRELATIONS.out.versions)
 
     //
     // SUBWORKFLOW: Construct required channels for subsequent set construction
@@ -172,10 +204,47 @@ workflow TAUTYPING {
     //
     // SUBWORKFLOW: Compute rank correlations between gene sets' distance matrices and WGS-based distance matrix
     //
+    ch_correlations_sets  = Channel.empty()
+    ch_sorted_sets        = Channel.empty()
+    ch_histograms_sets    = Channel.empty()
     RANK_CORRELATIONS_SETS (
         ch_wgs_matrix, ch_sets_dist, ch_method.first(), ch_sets
     )
+    ch_correlations_sets = ch_correlations_sets.mix(RANK_CORRELATIONS_SETS.out.correlations)
+    ch_sorted_sets       = ch_sorted_sets.mix(RANK_CORRELATIONS_SETS.out.sorted_corrs)
+    ch_histograms_sets   = ch_histograms_sets.mix(RANK_CORRELATIONS_SETS.out.png)
+    ch_versions          = ch_versions.mix(RANK_CORRELATIONS_SETS.out.versions)
+
+    //
+    // MODULE: MultiQC
+    //
+    workflow_summary    = WorkflowTautyping.paramsSummaryMultiqc(workflow, summary_params)
+    ch_workflow_summary = Channel.value(workflow_summary)
+
+    methods_description    = WorkflowTautyping.methodsDescriptionText(workflow, ch_multiqc_custom_methods_description)
+    ch_methods_description = Channel.value(methods_description)
+
+    ch_multiqc_files = Channel.empty()
+    ch_multiqc_files = ch_multiqc_files.mix(ch_wgs_tree.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(ch_wgs_plots.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(ch_histograms.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(ch_sorted_corrs.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(ch_histograms.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(ch_sorted_sets.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(ch_histograms_sets.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
+    ch_multiqc_files = ch_multiqc_files.mix(ch_methods_description.collectFile(name: 'methods_description_mqc.yaml'))
+
+
+    MULTIQC (
+        ch_multiqc_files.collect(),
+        ch_multiqc_config.toList(),
+        ch_multiqc_custom_config.toList(),
+        ch_multiqc_logo.toList()
+    )
+    multiqc_report = MULTIQC.out.report.toList()
 }
+
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

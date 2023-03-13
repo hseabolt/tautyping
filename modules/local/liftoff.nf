@@ -2,7 +2,7 @@ process LIFTOFF {
     tag "$meta.id"
     label 'process_low'
 
-    conda (params.enable_conda ? "bioconda::liftoff=1.6.3" : null)
+    conda "bioconda::liftoff=1.6.3"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/liftoff:1.6.3--pyhdfd78af_0' :
         'quay.io/biocontainers/liftoff' }"
@@ -27,14 +27,14 @@ process LIFTOFF {
     def ftypes = feature_types ? "-f $feature_types" : ""
     """
     liftoff \\
-    -g $refGFF \\
-    -u ${prefix}.unmapped_features.txt \\
-    -o ${prefix}.liftoff.gff \\
-    -p $task.cpus \\
-    $ftypes \\
-    $args \\
-    $inputFASTA \\
-    $refFASTA 
+        -g $refGFF \\
+        -u ${prefix}.unmapped_features.txt \\
+        -o ${prefix}.liftoff.gff \\
+        -p $task.cpus \\
+        $ftypes \\
+        $args \\
+        $inputFASTA \\
+        $refFASTA 
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

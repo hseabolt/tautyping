@@ -7,6 +7,7 @@ include { ONE_VS_ALL_FASTANI as FASTANI_ONE_VS_ALL } from '../../modules/local/o
 include { FASTANI_POSTPROC                         } from '../../modules/local/postproc_fastani'
 include { TABLE2MATRIX as TABLE2MATRIX_WGS         } from '../../modules/local/table2matrix'
 include { NJ_R as NJ_WGS                           } from '../../modules/local/nj'
+include { HEATMAP_FASTANI_R                        } from '../../modules/local/heatmap'
 
 workflow FASTANI {
 
@@ -43,6 +44,12 @@ workflow FASTANI {
 	    )
 		ch_wgs_matrix = ch_wgs_matrix.mix(TABLE2MATRIX_WGS.out.dist)
 
+		ch_fastani_plots = Channel.empty()
+		HEATMAP_FASTANI_R (
+			FASTANI_POSTPROC.out.ani
+		)
+		ch_fastani_plots = ch_fastani_plots.mix(HEATMAP_FASTANI_R.out.ani, HEATMAP_FASTANI_R.out.jaccard)
+
 		// Generate a Newick (neighbor-joining) tree from the distance matrix
 		ch_wgs_nwk = Channel.empty()
 		NJ_WGS (
@@ -51,8 +58,10 @@ workflow FASTANI {
 		ch_wgs_nwk = ch_wgs_nwk.mix(NJ_WGS.out.newick)
 		
     emit:
-        ani        = ch_ani                                                     // channel: [ ani  ]
-		wgs_matrix = ch_wgs_matrix                                              // channel: [ meta, dist ]
-		wgs_tree   = ch_wgs_nwk                                                 // channel: [ meta, nwk  ]
-        versions   = ch_versions                                                // channel: [ versions.yml ]
+        ani           = ch_ani                                                     // channel: [ ani  ]
+		wgs_matrix    = ch_wgs_matrix                                              // channel: [ meta, dist ]
+		wgs_tree      = ch_wgs_nwk                                                 // channel: [ meta, nwk  ]
+		wgs_plots     = ch_fastani_plots										   // channel: [ meta, png ]
+		wgs_nwk_plot  = NJ_WGS.out.png                                             // channel: [ meta, png  ]
+        versions      = ch_versions                                                // channel: [ versions.yml ]
 }

@@ -1,7 +1,7 @@
 process PREPARE_REFERENCE {
     label 'process_low'
 
-    conda (params.enable_conda ? "conda-forge::perl=5.32.1" : null)
+    conda "conda-forge::perl=5.32.1"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/perl:5.26.2' :
         'quay.io/biocontainers/perl:5.26.2' }"
@@ -20,8 +20,12 @@ process PREPARE_REFERENCE {
     script:  
     def args   = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "ref"
+    def fasta_zip   = fasta_in.endsWith('.gz')
+    def gff_zip   = gff_in.endsWith('.gz')
+    def command1 = ( gff_zip ) ? 'zcat' : 'cat'
+    def command2 = ( fasta_zip ) ? 'zcat' : 'cat'
     """
-    cat ${gff_in} | \\
+    $command1 ${gff_in} | \\
     perl -e '{
         while (<STDIN>) { 
             chomp \$_; 
@@ -35,11 +39,12 @@ process PREPARE_REFERENCE {
                 }
                 @annots = split(";", \$line[8]); 
                 foreach my \$feature ( @annots ) {
+                    \$feature =~ s/(\\(|\\))//g;
                     last if ( grep(/^gene=/, @annots) );
                     if ( \$feature =~ /^locus_tag=/i ) { 
                         \$name = \$feature; 
                         \$name =~ s/locus_tag=//i;
-                        \$name =~ s/_//;
+                        \$name =~ s/_//g;
                         \$feature = \$feature . ";gene=\$name";
                     } 
                 } 
@@ -54,7 +59,7 @@ process PREPARE_REFERENCE {
     else 
         cat ${prefix}.tmp.gff > ${prefix}.valid.gff
         echo "##FASTA" >> ${prefix}.valid.gff
-        cat ${fasta_in} >> ${prefix}.valid.gff
+        $command2 ${fasta_in} | sed '/^>/ s/ /_/g' >> ${prefix}.valid.gff
     fi
 
     rm ${prefix}.tmp.gff

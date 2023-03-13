@@ -6,6 +6,7 @@
 include { CORRELATIONS_R                       } from '../../modules/local/correlations'
 include { CAT_CAT as CAT_SETS                  } from '../../modules/nf-core/cat/cat/main'
 include { SORT as SORT_SETS                    } from '../../modules/local/sort'
+include { HISTOGRAM_R as HISTOGRAM_SETS        } from '../../modules/local/histogram'
 
 workflow RANK_CORRELATIONS_SETS {
 
@@ -38,9 +39,13 @@ workflow RANK_CORRELATIONS_SETS {
             CAT_SETS.out.file_out
         )
         ch_sorted = ch_sorted.mix(SORT_SETS.out.file_out)
+        HISTOGRAM_SETS(
+            ch_sorted
+        )
 
     emit:
-        correlations       = ch_correlations       // channel: [ [meta], correlations        ]
-        sorted_corrs       = ch_sorted             // channel: [ [meta], sorted_all          ]
-        versions           = ch_versions           // channel: [ versions.yml                ]
+        correlations       = ch_correlations          // channel: [ [meta], correlations        ]
+        sorted_corrs       = ch_sorted                // channel: [ [meta], sorted_all          ]
+        png                = HISTOGRAM_SETS.out.png   // channel: [ [meta], png                 ]
+        versions           = ch_versions              // channel: [ versions.yml                ]
 }

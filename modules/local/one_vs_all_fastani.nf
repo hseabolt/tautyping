@@ -2,7 +2,7 @@ process ONE_VS_ALL_FASTANI {
     tag "$meta.id"
     label 'process_medium'
 
-	conda (params.enable_conda ? "bioconda::fastani=1.33" : null)
+	conda "bioconda::fastani=1.33"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/fastani:1.33--h0fdf51a_1' :
         'quay.io/biocontainers/fastani:1.33--h0fdf51a_1' }"

@@ -8,7 +8,7 @@ include { BLAST_MAKEBLASTDB as MAKEBLASTDB } from '../../modules/nf-core/blast/m
 include { BLAST_BLASTN as BLASTN           } from '../../modules/nf-core/blast/blastn/main'
 include { TABLE2MATRIX                     } from '../../modules/local/table2matrix'
 include { NJ_R as NJ                       } from '../../modules/local/nj'
-
+include { PHANGORN_ML                      } from '../../modules/local/phangorn_ml'
 
 workflow CORE_GENOME {
 
@@ -43,19 +43,27 @@ workflow CORE_GENOME {
         ch_dists   = Channel.empty()
         ch_nwk     = Channel.empty()
         ch_blastdb = Channel.empty()
-        MAKEBLASTDB(
-            ch_core_aln.map{ meta, fasta -> fasta }
-        )
-        ch_blastdb = ch_blastdb.mix(MAKEBLASTDB.out.db).collect()
-        ch_version = ch_versions.mix(MAKEBLASTDB.out.versions)
-        BLASTN(
-            ch_genes, ch_blastdb
-        )
-        ch_version = ch_versions.mix(BLASTN.out.versions)
-        TABLE2MATRIX (
-	        BLASTN.out.txt
-	    )
-        ch_dists = ch_dists.mix(TABLE2MATRIX.out.dist)
+        if ( params.distance == 'ani' ) {
+            MAKEBLASTDB(
+                ch_core_aln.map{ meta, fasta -> fasta }
+            )
+            ch_blastdb = ch_blastdb.mix(MAKEBLASTDB.out.db).collect()
+            ch_version = ch_versions.mix(MAKEBLASTDB.out.versions)
+            BLASTN(
+                ch_genes, ch_blastdb
+            )
+            ch_version = ch_versions.mix(BLASTN.out.versions)
+            TABLE2MATRIX (
+	            BLASTN.out.txt
+	        )
+            ch_dists = ch_dists.mix(TABLE2MATRIX.out.dist)
+        } else {
+            PHANGORN_ML (
+                ch_genes
+            )
+            ch_dists = ch_dists.mix(PHANGORN_ML.out.dist)
+        }
+        
 		NJ (
 			ch_dists
 		)

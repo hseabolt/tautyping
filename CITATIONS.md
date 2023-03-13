@@ -10,7 +10,22 @@
 
 ## Pipeline tools
 
-- [FastQC](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
+- [Liftoff](https://academic.oup.com/bioinformatics/article/37/12/1639/6035128)
+  > Shumate, A., & Salzberg, S. L. (2021). Liftoff: accurate mapping of gene annotations. Bioinformatics, 37(12), 1639-1643.
+
+- [GFFRead](https://github.com/gpertea/gffread)
+
+- [FastANI](https://www.nature.com/articles/s41467-018-07641-9)
+  > Jain, C., Rodriguez-R, L. M., Phillippy, A. M., Konstantinidis, K. T., & Aluru, S. (2018). High throughput ANI analysis of 90K prokaryotic genomes reveals clear species boundaries. Nature communications, 9(1), 5114.
+
+- [Phangorn](https://academic.oup.com/bioinformatics/article/27/4/592/198887)
+  > Schliep, K. P. (2011). phangorn: phylogenetic analysis in R. Bioinformatics, 27(4), 592-593.
+
+- [PIRATE](https://academic.oup.com/gigascience/article/8/10/giz119/5584409)
+  > Bayliss, S. C., Thorpe, H. A., Coyle, N. M., Sheppard, S. K., & Feil, E. J. (2019). PIRATE: A fast and scalable pangenomics toolbox for clustering diverged orthologues in bacteria. Gigascience, 8(10), giz119.
+
+- [r-ggplot2](https://wires.onlinelibrary.wiley.com/doi/abs/10.1002/wics.147?__cf_chl_tk=h.mjTMJyKcigRU57gAIXk_csgmOSEg1D4qO3cY9ZDqk-1678658202-0-gaNycGzNEjs)
+  > Wickham, H. (2011). ggplot2. Wiley interdisciplinary reviews: computational statistics, 3(2), 180-185.
 
 - [MultiQC](https://pubmed.ncbi.nlm.nih.gov/27312411/)
   > Ewels P, Magnusson M, Lundin S, Käller M. MultiQC: summarize analysis results for multiple tools and samples in a single report. Bioinformatics. 2016 Oct 1;32(19):3047-8. doi: 10.1093/bioinformatics/btw354. Epub 2016 Jun 16. PubMed PMID: 27312411; PubMed Central PMCID: PMC5039924.
