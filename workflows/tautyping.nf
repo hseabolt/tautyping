@@ -20,12 +20,8 @@ for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true
 
 // Check mandatory parameters
 if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
+if (params.custom_tree) { ch_custom_tree = file(params.custom_tree, checkIfExists:true) } else { exit 1, 'Custom tree file specified but file doesnt exist!' }
 
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    CONFIG FILES
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -57,6 +53,7 @@ include { PREPROCESS_SETS                } from '../subworkflows/local/preproc_s
 include { CONSTRUCT_SETS                 } from '../subworkflows/local/construct_sets'
 include { CREATE_LIST                    } from '../modules/local/create_list'
 include { NJ_R as NJ_ML                  } from '../modules/local/nj'
+include { COPHENETIC_R                   } from '../modules/local/cophenetic'
 include { FASTTREE                       } from '../modules/nf-core/fasttree/main'
 include { PHANGORN_ML as PHANGORN_ML_WGS } from '../modules/local/phangorn_ml'
 include { MULTIQC                        } from '../modules/nf-core/multiqc/main'
@@ -126,7 +123,15 @@ workflow TAUTYPING {
     ch_wgs_matrix  = Channel.empty()
     ch_wgs_tree    = Channel.empty()
     ch_wgs_plots   = Channel.empty()
-    if ( params.distance == 'ani') {
+    if ( params.custom_tree ) {
+        ch_custom_tree = file(params.custom_tree)
+        //ch_custom_tree.collect{tree -> tree}.map{ tree -> [[id: "WGS"], tree]}.set{ ch_cophenetic }
+        COPHENETIC_R (
+            [[id: "WGS"], file(params.custom_tree)]
+        )
+        ch_wgs_matrix    = COPHENETIC_R.out.dist
+    }
+    if ( !params.custom_tree && params.distance == 'ani') {
         FASTANI (
             ch_fastani_qry, ch_genome_list, ch_mappings
         )
@@ -151,7 +156,7 @@ workflow TAUTYPING {
     ch_dists          = ch_dists.mix(CORE_GENOME.out.dists)
 	ch_versions       = ch_versions.mix(CORE_GENOME.out.versions)
 
-    if ( params.distance == 'likelihood') {
+    if ( !params.custom_tree && params.distance == 'likelihood') {
         PHANGORN_ML_WGS (
             ch_core_alns
         )

@@ -25,7 +25,9 @@ process CORRELATIONS_R {
 	#!/usr/bin/env Rscript --vanilla
 
     matrix1 <- as.matrix(read.table("$matrix1", head=T, row.names=1))
+    matrix1 <- matrix1[sort(rownames(matrix1)), sort(colnames(matrix1))]
     matrix2 <- as.matrix(read.table("$matrix2", head=T, row.names=1))
+    matrix2 <- matrix2[sort(rownames(matrix2)), sort(colnames(matrix2))]
     file_out <- file("${prefix}.${method}.csv")
     if ( identical(dim(matrix1),dim(matrix2)) ) {
         corr <- cor.test(matrix1, matrix2, method="$method")
