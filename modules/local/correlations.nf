@@ -24,19 +24,21 @@ process CORRELATIONS_R {
     """
 	#!/usr/bin/env Rscript --vanilla
 
-    matrix1 <- as.matrix(read.table("$matrix1", head=T, row.names=1))
-    matrix1 <- matrix1[sort(rownames(matrix1)), sort(colnames(matrix1))]
-    matrix2 <- as.matrix(read.table("$matrix2", head=T, row.names=1))
-    matrix2 <- matrix2[sort(rownames(matrix2)), sort(colnames(matrix2))]
+    matrix1 <- as.matrix(read.table("$matrix1", sep="\\t", head=T, row.names=1))
+    matrix2 <- as.matrix(read.table("$matrix2", sep="\\t", head=T, row.names=1))
     file_out <- file("${prefix}.${method}.csv")
     if ( identical(dim(matrix1),dim(matrix2)) ) {
+        matrix1 <- matrix1[sort(rownames(matrix1)), sort(colnames(matrix1))]
+        matrix2 <- matrix2[sort(rownames(matrix2)), sort(colnames(matrix2))]
         corr <- cor.test(matrix1, matrix2, method="$method")
         str <- paste("${prefix}", round(corr\$estimate,4), nrow(matrix1), nrow(matrix2), normalizePath("${fasta}"), sep=",")
         writeLines(str, file_out)
-    } else if ( nrow(matrix2) <= 1 ) {
+    } else if ( nrow(matrix2) == 1 ) {
         str <- paste("${prefix}", "NA", nrow(matrix1), nrow(matrix2), normalizePath("${fasta}"), sep=",")
         writeLines(str, file_out)
     } else {
+        matrix1 <- matrix1[sort(rownames(matrix1)), sort(colnames(matrix1))]
+        matrix2 <- matrix2[sort(rownames(matrix2)), sort(colnames(matrix2))]
         row_names_to_remove <- setdiff(rownames(matrix1), rownames(matrix2))
         col_names_to_remove <- setdiff(colnames(matrix1), colnames(matrix2))
         matrix1.rm <- matrix1[!(row.names(matrix1) %in% row_names_to_remove),]
