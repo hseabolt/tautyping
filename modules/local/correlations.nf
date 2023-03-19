@@ -33,7 +33,7 @@ process CORRELATIONS_R {
         corr <- cor.test(matrix1, matrix2, method="$method")
         str <- paste("${prefix}", round(corr\$estimate,4), nrow(matrix1), nrow(matrix2), normalizePath("${fasta}"), sep=",")
         writeLines(str, file_out)
-    } else if ( nrow(matrix2) == 1 ) {
+    } else if ( nrow(matrix2) <= 1 ) {
         str <- paste("${prefix}", "NA", nrow(matrix1), nrow(matrix2), normalizePath("${fasta}"), sep=",")
         writeLines(str, file_out)
     } else {
