@@ -20,7 +20,7 @@ Development and testing of this pipeline used `singularity` as the container tec
 7. Rank sets against WGS (Custom ([`R`](https://www.r-project.org/)) scripts)
 8. Tabulate results ([`MultiQC`](http://multiqc.info/))
 
-![Tau-typing](docs/images/tautyping_workflow_v1.0.300.png) 
+![Tau-typing](docs/images/tautyping_workflow_v1.0.300.tiff) 
 
 ## Quick Start
 
@@ -69,7 +69,7 @@ If you use Tau-typing for your analysis, please cite it using the following cita
 >
 > Matthew H. Seabolt, Arun K. Boddapati, Joshua J. Forstedt, Kostantinos T. Konstantinidis.  
 >
-> Tau-typing: a Nextflow pipeline enabling on-demand, high-resolution molecular typing for pathogen genomics.
+> Tau-typing: a Nextflow pipeline for finding the best phylogenetic markers in the genome for genomotyping of microbial species
 >
 > _To be submitted to Bioinformatics_
 
