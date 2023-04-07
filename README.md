@@ -20,7 +20,7 @@ Development and testing of this pipeline used `singularity` as the container tec
 7. Rank sets against WGS (Custom ([`R`](https://www.r-project.org/)) scripts)
 8. Tabulate results ([`MultiQC`](http://multiqc.info/))
 
-![Tau-typing](docs/images/tautyping_workflow_v1.0.300.tiff) 
+![Tau-typing](docs/images/tautyping_workflow_v1.0.300.png) 
 
 ## Quick Start
 
