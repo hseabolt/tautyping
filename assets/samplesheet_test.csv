@@ -1,7 +1,7 @@
 sample,fasta
-Ecoli_CFT073,"$baseDir/data/Ecoli/GCF_021559855.1_ASM2155985v1_genomic.fasta"
-Ecoli_E2348-69,.$baseDir/data/Ecoli/GCF_014117345.2_ASM1411734v2_genomic.fasta
-Ecoli_O42,$baseDir/data/Ecoli/GCA_014462355.1_PDT000827954.1_genomic.fasta
-Sdysenteriae_SWHEFF49,$baseDir/data/Ecoli/GCF_022354085.1_ASM2235408v1_genomic.fasta
-Ecoli_O157_Sakai,$baseDir/data/Ecoli/GCF_000008865.2_ASM886v2_genomic.fasta
-Ecoli_K12,$baseDir/data/Ecoli/GCA_028644645.1_PDT001616235.1_genomic.fasta
+B-1-617-3,https://raw.githubusercontent.com/hseabolt/tautyping/main/data/SARS-CoV-2/B.1.617.3_1.fasta
+mu_B-1-621,https://raw.githubusercontent.com/hseabolt/tautyping/main/data/SARS-CoV-2/mu_B.1.621_1.fasta
+NC_045512,https://raw.githubusercontent.com/hseabolt/tautyping/main/data/SARS-CoV-2/NC_045512.2.fasta
+om_BA-1b,https://raw.githubusercontent.com/hseabolt/tautyping/main/data/SARS-CoV-2/om_BA.1_1.fasta
+om_BA-3,https://raw.githubusercontent.com/hseabolt/tautyping/main/data/SARS-CoV-2/om_BA.3_1.fasta
+om_BA-5,https://raw.githubusercontent.com/hseabolt/tautyping/main/data/SARS-CoV-2/om_BA.5_1.fasta
