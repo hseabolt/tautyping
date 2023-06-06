@@ -1,7 +1,6 @@
 sample,fasta
 B-1-617-3,https://raw.githubusercontent.com/hseabolt/tautyping/main/data/sc2/B.1.617.3_1.fasta
 mu_B-1-621,https://raw.githubusercontent.com/hseabolt/tautyping/main/data/sc2/mu_B.1.621_1.fasta
-NC_045512,https://raw.githubusercontent.com/hseabolt/tautyping/main/data/sc2/NC_045512.fasta
 om_B-1-1-29,https://raw.githubusercontent.com/hseabolt/tautyping/main/data/sc2/om_B.1.1.529_1.fasta
 om_BA-1a,https://raw.githubusercontent.com/hseabolt/tautyping/main/data/sc2/om_BA.1.1_1.fasta
 om_BA-1b,https://raw.githubusercontent.com/hseabolt/tautyping/main/data/sc2/om_BA.1_1.fasta
