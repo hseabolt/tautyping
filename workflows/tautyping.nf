@@ -49,7 +49,6 @@ include { RANK_CORRELATIONS              } from '../subworkflows/local/rank_corr
 include { RANK_CORRELATIONS_SETS         } from '../subworkflows/local/rank_correlations_sets'
 include { PREPROCESS_SETS                } from '../subworkflows/local/preproc_sets'
 include { CONSTRUCT_SETS                 } from '../subworkflows/local/construct_sets'
-include { STAGE_DATA                     } from '../modules/local/stage_data'
 include { CREATE_LIST                    } from '../modules/local/create_list'
 include { NJ_R as NJ_ML                  } from '../modules/local/nj'
 include { COPHENETIC_R                   } from '../modules/local/cophenetic'
@@ -88,17 +87,12 @@ workflow TAUTYPING {
     //
     ch_all_fastas = Channel.empty()
     ch_input      = file(params.input)
-	// Stage fasta files if they are not on local disk
-	//STAGE_DATA (
-	//	ch_input
-	//)
     INPUT_CHECK (
         ch_input
     )
     ch_versions     = ch_versions.mix(INPUT_CHECK.out.versions)
 	ch_annots_fasta = INPUT_CHECK.out.fasta
     ch_fastani_qry  = INPUT_CHECK.out.fasta
-	//ch_list         = STAGE_DATA.out.samplesheet
 	
     //
     // SUBWORKFLOW: Transfer GFF annotations from a reference FASTA/GFF to another closely related genome
