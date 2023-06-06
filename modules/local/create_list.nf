@@ -7,7 +7,8 @@ process CREATE_LIST {
         'quay.io/biocontainers/perl:5.26.2' }"
 
     input:
-    path(sample_sheet)
+    tuple val(meta), path(fasta)
+    path(samplesheet)
 
     output:
 	path "genomes.list"               , emit: list
@@ -18,12 +19,11 @@ process CREATE_LIST {
 
     script:  
     def args = task.ext.args ?: ''
+    //def name = "${fasta.getSimpleName()}"
     """
-	cut $args $sample_sheet | tail -n +2 > genomes.list
+	echo "\$(realpath ${fasta})" >> genomes.list
     
-    for i in `tail -n +2 $sample_sheet | cut $args`; do \\
-        base=`basename \$i | sed "s/\\.fa.*\$//"`
-        grep "\$i" $sample_sheet | awk -v name=\$base 'BEGIN { FS="," }; { print \$1, "\\t", name }'
-    done > genomes.basenames
+    BASE=\$(basename ${fasta} | sed "s/\\.fa.*\$//")
+    grep "${fasta}" $samplesheet | awk -v name=\$BASE 'BEGIN { FS="," }; { print \$1, "\\t", name }' >> genomes.basenames
     """
 }

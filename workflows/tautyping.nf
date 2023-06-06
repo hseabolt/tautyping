@@ -93,6 +93,7 @@ workflow TAUTYPING {
     ch_versions     = ch_versions.mix(INPUT_CHECK.out.versions)
 	ch_annots_fasta = INPUT_CHECK.out.fasta
     ch_fastani_qry  = INPUT_CHECK.out.fasta
+    ch_list         = INPUT_CHECK.out.fasta
 	
     //
     // SUBWORKFLOW: Transfer GFF annotations from a reference FASTA/GFF to another closely related genome
@@ -110,10 +111,14 @@ workflow TAUTYPING {
 
     // MODULE: Create some list files to be used downstream
     CREATE_LIST (
-       params.input
+       ch_list, params.input
     )
-    ch_genome_list = CREATE_LIST.out.list
-    ch_mappings = CREATE_LIST.out.basenames
+    ch_genome_list = CREATE_LIST.out.list.collectFile()
+    ch_genome_list.branch{ LIST: it.name.contains('genomes.list') }.set { list }
+    ch_genome_list = list.LIST.collectFile(name: 'genomes.list', storeDir: "${params.outdir}/pipeline_info").collect()
+    ch_mappings = CREATE_LIST.out.basenames.collectFile()
+    ch_mappings.branch{ MAPPINGS: it.name.contains('genomes.basenames')}.set { mappings }
+    ch_mappings = mappings.MAPPINGS.collectFile(name: 'genomes.basenames', storeDir: "${params.outdir}/pipeline_info").collect()
 
     //
     // SUBWORKFLOW: Compute one vs. all FastANI and generate a table of genome pairs
