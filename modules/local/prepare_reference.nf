@@ -41,12 +41,18 @@ process PREPARE_REFERENCE {
                 foreach my \$feature ( @annots ) {
                     \$feature =~ s/(\\(|\\))//g;
                     last if ( grep(/^gene=/, @annots) );
-                    if ( \$feature =~ /^locus_tag=/i ) { 
+                    if ( \$feature =~ /^(locus_tag=)/i || \$feature =~ /^(gene_id=)/i ) { 
                         \$name = \$feature; 
-                        \$name =~ s/locus_tag=//i;
+                        \$name =~ s/\$1//i;
                         \$name =~ s/_//g;
                         \$feature = \$feature . ";gene=\$name";
-                    } 
+                    }
+					elsif ( \$feature =~ /^ID=/i ) { 
+                        \$name = \$feature; 
+                        \$name =~ s/ID=//i;
+                        \$name =~ s/_//g;
+                        \$feature = \$feature . ";gene=\$name";
+                    }					
                 } 
                 \$line[8] = join(";", @annots); 
                 print join("\\t", @line), "\\n"; 
